@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Slide Viewer</title>
+
+  <script src="https://openseadragon.github.io/openseadragon/openseadragon.min.js">
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      background-color: black;
+    }
+
+    #viewer {
+      width: 100%;
+      height: 100vh;
+    }
+
+    #navigator {
+      position: absolute;
+      width: 200px;
+      height: 150px;
+      top: 10px;
+      right: 10px;
+      border: 2px solid white;
+      z-index: 1000;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="viewer"></div>
+<div id="navigator"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const slide = params.get("slide");
+
+const blob = "leeshistology";
+const dziUrl = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide}/${capitalize(slide)}.dzi`;
+
+function capitalize(name) {
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+OpenSeadragon({
+  id: "viewer",
+  prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
+  tileSources: dziUrl,
+
+  showNavigator: true,
+  navigatorId: "navigator",
+  navigatorPosition: "TOP_RIGHT",
+  minZoomImageRatio: 0.9,
+  visibilityRatio: 1.0,
+  //navigatorAutoResize: true,
+  navigatorBackground: "#222",
+  navigatorBorderColor: "#999",
+  navigatorDisplayRegionColor: "red",
+
+  showZoomControl: true,
+  showHomeControl: true,
+  showFullPageControl: true,
+  showRotationControl: false
+});
+</script>
+
+</body>
+</html>

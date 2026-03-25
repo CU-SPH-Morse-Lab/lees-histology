@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lee's Histology</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      margin: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 220px);
+      gap: 20px;
+    }
+
+    .card {
+      text-align: center;
+    }
+
+    img {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #333;
+      transition: 0.2s;
+    }
+
+    img:hover {
+      transform: scale(1.05);
+      border-color: #4da6ff;
+    }
+
+    a {
+      text-decoration: none;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Lee's Histo Slide Gallery Beta Test</h1>
+
+<div class="grid" id="gallery"></div>
+
+<script>
+const blob = "leeshistology";
+
+fetch("slides.json")
+  .then(res => res.json())
+  .then(slides => {
+    const gallery = document.getElementById("gallery");
+
+    slides.forEach(slide => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const link = document.createElement("a");
+      link.href = `viewer.html?slide=${slide.folder}`;
+
+      const img = document.createElement("img");
+      img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.folder}/${slide.name}_thumb.jpg`;
+
+      const label = document.createElement("div");
+      label.textContent = slide.name;
+
+      link.appendChild(img);
+      link.appendChild(label);
+      card.appendChild(link);
+      gallery.appendChild(card);
+    });
+  });
+</script>
+
+</body>
+</html>
