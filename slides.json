@@ -1,10 +1,151 @@
 [
   {
-    "name": "Spleen",
-    "folder": "spleen"
+    "ID": "spleen",
+    "Title": "Spleen",
+    "Description": "Spleen with red and white pulp",
+    "metadata": {
+      "Owner": "Lee, Lisa",
+      "Month": "April",
+      "Day": 4,
+      "Year": 2026,
+      "Tissue": "Epithelium",
+      "System": "Immune",
+      "Stain": "H&E",
+      "Magnification": "40x",
+      "tags": [
+        "spleen",
+        "red pulp",
+        "white pulp"
+      ]
+    },
+    "media": {
+      "Image_URL": "/Spleen_files",
+      "Thumb_URL": "/Spleen_thumb.jpg",
+      "DZI_URL": "/Spleen.dzi"
+    },
+    "Active": true
   },
   {
-    "name": "Pineal",
-    "folder": "pineal"
+    "ID": "pineal",
+    "Title": "Pineal Gland",
+    "Description": "Pineal gland with corpora aranacea",
+    "metadata": {
+      "Owner": "Lee, Lisa",
+      "Month": "April",
+      "Day": 4,
+      "Year": 2026,
+      "Tissue": "Nervous",
+      "System": "CNS",
+      "Stain": "H&E",
+      "Magnification": "20x",
+      "tags": [
+        "pineal",
+        "corpora aranacea"
+      ]
+    },
+    "media": {
+      "Image_URL": "/Pineal_files",
+      "Thumb_URL": "/Pineal_thumb.jpg",
+      "DZI_URL": "/Pineal.dzi"
+    },
+    "Active": true
+  },
+  {
+    "ID": "CU-001-256",
+    "Title": "Loose CT-256",
+    "Description": "Abundant fibroblasts",
+    "metadata": {
+      "Owner": "Lee, Lisa",
+      "Month": "March",
+      "Day": 2,
+      "Year": 2015,
+      "Tissue": "Connective",
+      "System": "Digestive",
+      "Stain": "Silver",
+      "Magnification": "40x",
+      "tags": [
+        "loose CT",
+        "fibroblast"
+      ]
+    },
+    "media": {
+      "Image_URL": "/CU-001-256_files",
+      "Thumb_URL": "/CU-001-256_thumb.jpg",
+      "DZI_URL": "/CU-001-256.dzi"
+    },
+    "Active": true
+  },
+  {
+    "ID": "CU-001-512",
+    "Title": "Loose CT-512",
+    "Description": "Abundantfibroblasts",
+    "metadata": {
+      "Owner": "Lee, Lisa",
+      "Month": "March",
+      "Day": 2,
+      "Year": 2015,
+      "Tissue": "Connective",
+      "System": "Digestive",
+      "Stain": "Silver",
+      "Magnification": "40x",
+      "tags": [
+        "loose CT",
+        "fibroblast"
+      ]
+    },
+    "media": {
+      "Image_URL": "/CU-001-512_files",
+      "Thumb_URL": "/CU-001-512_thumb.jpg",
+      "DZI_URL": "/CU-001-512.dzi"
+    },
+    "Active": true
+  },
+  {
+    "ID": "CU-002-256",
+    "Title": "Ovary-256",
+    "Description": "Mature follicles & corpora albicans",
+    "metadata": {
+      "Owner": "Lee, Lisa",
+      "Month": "October",
+      "Day": 27,
+      "Year": 2009,
+      "Tissue": "Epithelium",
+      "System": "F-Repro",
+      "Stain": "H&E",
+      "Magnification": "40x",
+      "tags": [
+        "ovary"
+      ]
+    },
+    "media": {
+      "Image_URL": "/CU-002-256_files",
+      "Thumb_URL": "/CU-002-256_thumb.jpg",
+      "DZI_URL": "/CU-002-256.dzi"
+    },
+    "Active": true
+  },
+  {
+    "ID": "CU-002-512",
+    "Title": "Ovary-512",
+    "Description": "Mature follicles & corpora albicans",
+    "metadata": {
+      "Owner": "Lee, Lisa",
+      "Month": "October",
+      "Day": 27,
+      "Year": 2009,
+      "Tissue": "Epithelium",
+      "System": "F-Repro",
+      "Stain": "H&E",
+      "Magnification": "40x",
+      "tags": [
+        "ovary"
+      ]
+    },
+    "media": {
+      "Image_URL": "/CU-002-512_files",
+      "Thumb_URL": "/CU-002-512_thumb.jpg",
+      "DZI_URL": "/CU-002-512.dzi"
+    },
+    "Active": true
   }
 ]
