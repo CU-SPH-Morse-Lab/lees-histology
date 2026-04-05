@@ -61,13 +61,13 @@ fetch("slides.json")
       card.className = "card";
 
       const link = document.createElement("a");
-      link.href = `viewer.html?slide=${slide.folder}`;
+      link.href = `viewer.html?slide=${slide.ID}`;
 
       const img = document.createElement("img");
-      img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.folder}/${slide.name}_thumb.jpg`;
+      img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.Title}_thumb.jpg`;
 
       const label = document.createElement("div");
-      label.textContent = slide.name;
+      label.textContent = slide.Title;
 
       link.appendChild(img);
       link.appendChild(label);
