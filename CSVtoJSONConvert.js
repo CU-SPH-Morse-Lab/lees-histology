@@ -8,8 +8,25 @@ const parsed = Papa.parse(csvFile, {
   skipEmptyLines: true
 });
 
+let errors = [];
+
 const cleaned = parsed.data
-  .filter(row => row.ID && row.Title) // require key fields
+    .filter((row, index) => {
+    const rowNum = index + 1;
+    if (!row.ID) {
+      errors.push(`Row ${rowNum}: Missing ID`);
+      return false;
+    }
+    if (!row.Title) {
+      errors.push(`Row ${rowNum}: Missing Title`);
+      return false;
+    }
+    if (!row.Active) {
+      errors.push(`Row ${rowNum}: Missing Active flag`);
+      return false;
+    }
+    return true;
+  })
   .map(row => ({
     ID: row.ID,
     Title: row.Title,
@@ -35,6 +52,12 @@ const cleaned = parsed.data
   
     Active: row.Active === "TRUE"
 }));
+
+if (errors.length > 0) {
+  console.error("CSV VALIDATION ERRORS:");
+  errors.forEach(e => console.error(e));
+  process.exit(1);
+}
 
 fs.writeFileSync(
   "slides.json",
