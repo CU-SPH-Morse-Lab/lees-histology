@@ -2,6 +2,6 @@ ID,Title,Description,Owner,Month,Day,Year,Tissue,System,Stain,Magnification,Tags
 spleen,Spleen,Spleen with red and white pulp,"Lee, Lisa",April,4,2026,Epithelium,Immune,H&E,40x,"spleen, red pulp, white pulp",/Spleen_files,/Spleen_thumb.jpg,/Spleen.dzi,TRUE
 pineal,Pineal Gland,Pineal gland with corpora aranacea,"Lee, Lisa",April,4,2026,Nervous,CNS,H&E,20x,"pineal, corpora aranacea",/Pineal_files,/Pineal_thumb.jpg,/Pineal.dzi,TRUE
 CU-001-256,Loose CT-256,Abundant fibroblasts,"Lee, Lisa",March,2,2015,Connective,Digestive,Silver,40x,"loose CT, fibroblast",/CU-001-256_files,/CU-001-256_thumb.jpg,/CU-001-256.dzi,TRUE
-CU-001-512,Loose CT-512,Abundant  fibroblasts,"Lee, Lisa",March,2,2015,Connective,Digestive,Silver,40x,"loose CT, fibroblast",/CU-001-512_files,/CU-001-512_thumb.jpg,/CU-001-512.dzi,TRUE
+CU-001-512,Loose CT-512,Abundant fibroblasts,"Lee, Lisa",March,2,2015,Connective,Digestive,Silver,40x,"loose CT, fibroblast",/CU-001-512_files,/CU-001-512_thumb.jpg,/CU-001-512.dzi,TRUE
 CU-002-256,Ovary-256,Mature follicles & corpora albicans,"Lee, Lisa",October,27,2009,Epithelium,F-Repro,H&E,40x,ovary,/CU-002-256_files,/CU-002-256_thumb.jpg,/CU-002-256.dzi,TRUE
 CU-002-512,Ovary-512,Mature follicles & corpora albicans,"Lee, Lisa",October,27,2009,Epithelium,F-Repro,H&E,40x,ovary,/CU-002-512_files,/CU-002-512_thumb.jpg,/CU-002-512.dzi,TRUE
