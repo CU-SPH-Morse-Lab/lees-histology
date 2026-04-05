@@ -3,7 +3,7 @@ name: Convert CSV to JSON
 on:
   push:
     paths:
-      - 'lees-histology/slides.csv'
+      - 'lees-histology/SlideMetadata.csv'
 
 jobs:
   convert:
