@@ -22,12 +22,12 @@ jobs:
         run: npm install papaparse
 
       - name: Run conversion script
-        run: node convert.js
+        run: node CSVtoJSONConvert.js
 
       - name: Commit and push JSON
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add data/slides.json
+          git add lees-histology/slides.json
           git commit -m "Auto-update slides.json"
           git push
