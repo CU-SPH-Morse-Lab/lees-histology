@@ -60,7 +60,9 @@
 
   <div id="systemFilters">
     <strong>System:</strong><br>
-    <!-- dynamically filled -->
+    <select id="systemDropdown">
+      <option value="">All</option>
+    </select>
   </div>
 
 </div>
@@ -79,8 +81,13 @@ fetch("slides.json")
 
     populateSystemFilters(slides);
     renderSlides(slides);
-
     setupFilters();
+    
+    document.getElementById("searchBox").value = "";
+    document.getElementById("systemDropdown").value = "";
+    document.querySelectorAll("#tissueFilters input").forEach(cb => {
+      cb.checked = false;
+    });
   });
 
 
@@ -110,19 +117,19 @@ function renderSlides(slides) {
 }
 
 
-// Create dynamic system filters
+// Create dynamic system filters dropdown
 function populateSystemFilters(slides) {
-  const container = document.getElementById("systemFilters");
+  const dropdown = document.getElementById("systemDropdown");
 
-  const systems = [...new Set(slides.map(s => s.metadata.System))];
+  const systems = [...new Set(slides.map(s => s.metadata.System))].sort();
 
   systems.forEach(sys => {
-    const label = document.createElement("label");
-    label.innerHTML = `<input type="checkbox" value="${sys}"> ${sys}`;
-    container.appendChild(label);
+    const option = document.createElement("option");
+    option.value = sys;
+    option.textContent = sys;
+    dropdown.appendChild(option);
   });
 }
-
 
 // Setup filtering logic
 function setupFilters() {
@@ -140,8 +147,7 @@ function applyFilters() {
   const selectedTissues = [...document.querySelectorAll("#tissueFilters input:checked")]
     .map(el => el.value);
 
-  const selectedSystems = [...document.querySelectorAll("#systemFilters input:checked")]
-    .map(el => el.value);
+  const selectedSystem = document.getElementById("systemDropdown").value;
 
   const filtered = allSlides.filter(slide => {
 
@@ -159,8 +165,7 @@ function applyFilters() {
 
     // System match
     const matchesSystem =
-      selectedSystems.length === 0 ||
-      selectedSystems.includes(meta.System);
+      !selectedSystem || meta.System === selectedSystem;
 
     return matchesSearch && matchesTissue && matchesSystem;
   });
