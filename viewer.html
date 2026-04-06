@@ -15,6 +15,19 @@
 			font-family: Arial;
 		}
 
+		#backButton {
+			position: fixed;
+			top: 10px;
+			left: 10px;
+			background: ##CFB87C;
+			color: #CFB87C;
+			padding: 8px 12px;
+			cursor: pointer;
+			z-index: 1200;
+			border-radius: 5px;
+			font-size: 14px;
+		}
+
 		#sidebar {
 			position: fixed;
 			left: -300px; /* hidden by default */
@@ -69,6 +82,8 @@
 
 	<div id="toggleTab">☰</div>
 
+	<div id="backButton">Gallery Home</div>
+
 	<div id="sidebar">
 		<h2 id="title">Loading...</h2>
 		<p id="description"></p>
@@ -95,10 +110,16 @@
 			sidebar.classList.toggle("open");
 		});
 	
+		// Catch if slide cannot be displayed
 		if (!slideID) {
 			document.body.innerHTML = "<h1 style='color:white'>Error: No slide specified</h1>";
 		}
-	
+
+		// Button to return to slide gallery
+		document.getElementById("backButton").onclick = () => {
+			window.location.href = "index.html";
+		};
+
 		// Load metadata
 		fetch("slides.json")
 		.then(res => {
@@ -145,18 +166,22 @@
 				showNavigator: true,
 				crossOriginPolicy: 'Anonymous',
 				navigatorPosition: "TOP_RIGHT",
-				navigatorAutoFade: false,
+				navigatorAutoFade: true,
 				minZoomImageRatio: 0.9,
 				visibilityRatio: 1.0,
+				navigatorWidth: 0.15,   // 15% of viewer width
+				navigatorHeight: 0.15,
 				navigatorAutoResize: true,
 				navigatorBackground: "#222",
 				navigatorBorderColor: "#999",
 				navigatorDisplayRegionColor: "red",
 				
+				showNavigationControl: true,
 				showZoomControl: true,
 				showHomeControl: true,
 				showFullPageControl: true,
-				showRotationControl: false
+				showRotationControl: false,
+				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
 		}
 	</script>
