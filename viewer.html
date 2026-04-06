@@ -9,101 +9,131 @@
   <style>
     body {
       margin: 0;
-      background-color: black;
+      display: flex;
+      background: black;
+      color: white;
+      font-family: Arial;
+    }
+
+    #sidebar {
+      width: 300px;
+      background: #222;
+      padding: 15px;
+      overflow-y: auto;
     }
 
     #viewer {
-      width: 100%;
+      flex-grow: 1;
       height: 100vh;
     }
 
-    #navigator {
-      position: absolute;
-      width: 200px;
-      height: 150px;
-      top: 10px;
-      right: 10px;
-      border: 2px solid white;
-      z-index: 1000;
+    h2 {
+      margin-top: 0;
+    }
+
+    .meta {
+      margin-bottom: 10px;
+    }
+
+    .label {
+      font-weight: bold;
     }
   </style>
 </head>
 
 <body>
 
+<div id="sidebar">
+  <h2 id="title">Loading...</h2>
+  <p id="description"></p>
+
+  <div class="meta"><span class="label">Owner:</span> <span id="owner"></span></div>
+  <div class="meta"><span class="label">Date:</span> <span id="date"></span></div>
+  <div class="meta"><span class="label">Tissue:</span> <span id="tissue"></span></div>
+  <div class="meta"><span class="label">System:</span> <span id="system"></span></div>
+  <div class="meta"><span class="label">Stain:</span> <span id="stain"></span></div>
+  <div class="meta"><span class="label">Magnification:</span> <span id="magnification"></span></div>
+  <div class="meta"><span class="label">Tags:</span> <span id="tags"></span></div>
+</div>
+
 <div id="viewer"></div>
-<div id="navigator"></div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const slide = params.get("slide");
 const blob = "leeshistology";
-const dziUrl = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}.dzi`;
+const params = new URLSearchParams(window.location.search);
+const slideID = params.get("slide");
 
+if (!slideID) {
+  document.body.innerHTML = "<h1 style='color:white'>Error: No slide specified</h1>";
+}
+
+// Load metadata
 fetch("slides.json")
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("Failed to load slides.json");
+    return res.json();
+  })
+  
   .then(slides => {
     const slide = slides.find(s => s.ID === slideID);
-
     if (!slide) {
-      console.error("Slide not found");
-      return;
+      throw new Error("Slide not found in JSON");
     }
-
+	
     populateSidebar(slide);
     loadViewer(slide);
-});
+  })
+  .catch(err => {
+    console.error(err);
+    document.body.innerHTML = "<h1 style='color:white'>Error loading slide information</h1>";
+  });
 
+// Populate sidebar
 function populateSidebar(slide) {
-  document.getElementById("Title").textContent = slide.Title;
-  document.getElementById("Description").textContent = slide.Description;
+  document.getElementById("title").textContent = slide.Title;
+  document.getElementById("description").textContent = slide.Description;
 
   const meta = slide.metadata;
 
-  document.getElementById("Owner").textContent = meta.Owner;
-  document.getElementById("Tissue").textContent = meta.Tissue;
-  document.getElementById("System").textContent = meta.System;
-  document.getElementById("Stain").textContent = meta.Stain;
-  document.getElementById("Magnification").textContent = meta.Magnification;
+  document.getElementById("owner").textContent = meta.Owner || "";
+  document.getElementById("tissue").textContent = meta.Tissue || "";
+  document.getElementById("system").textContent = meta.System || "";
+  document.getElementById("stain").textContent = meta.Stain || "";
+  document.getElementById("magnification").textContent = meta.Magnification || "";
 
-  document.getElementById("Tags").textContent = meta.tags.join(", ");
+  document.getElementById("tags").textContent = (meta.tags || []).join(", ");
+
+  const date = `${meta.Month || ""} ${meta.Day || ""}, ${meta.Year || ""}`;
+  document.getElementById("date").textContent = date;
 }
 
+// Initialize OpenSeadragon
 function loadViewer(slide) {
+  const dziUrl = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}.dzi`;
+
   OpenSeadragon({
     id: "viewer",
     prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
     tileSources: dziUrl,
-    showNavigator: true.
-    crossOriginPolicy: 'Anonymous',
-    navigatorId: "navigator",
-    navigatorPosition: "TOP_RIGHT",
+
+    showNavigator: true,
+	crossOriginPolicy: 'Anonymous',
+	navigatorPosition: "TOP_RIGHT",
+    navigatorAutoFade: false,
     minZoomImageRatio: 0.9,
     visibilityRatio: 1.0,
-    navigatorAutoResize: true,
-    navigatorBackground: "#222",
-    navigatorBorderColor: "#999",
-    navigatorDisplayRegionColor: "red",
-    showZoomControl: true,
-    showHomeControl: true,
-    showFullPageControl: true,
-    showRotationControl: false
+	navigatorAutoResize: true,
+	navigatorBackground: "#222",
+	navigatorBorderColor: "#999",
+	navigatorDisplayRegionColor: "red",
+
+	showZoomControl: true,
+	showHomeControl: true,
+	showFullPageControl: true,
+	showRotationControl: false
   });
 }
-
 </script>
 
-<div id="sidebar">
-  <h2 id="Title"></h2>
-  <p id="Description"></p>
-
-  <p><b>Owner:</b> <span id="Owner"></span></p>
-  <p><b>Tissue:</b> <span id="Tissue"></span></p>
-  <p><b>System:</b> <span id="System"></span></p>
-  <p><b>Stain:</b> <span id="Stain"></span></p>
-  <p><b>Magnification:</b> <span id="Magnification"></span></p>
-  <p><b>Tags:</b> <span id="Tags"></span></p>
-</div>
-  
 </body>
 </html>
