@@ -1,7 +1,7 @@
 [
   {
     "ID": "spleen",
-    "Title": "Spleen",
+    "Title": "spleen",
     "Description": "Spleen with red and white pulp",
     "metadata": {
       "Owner": "Lee, Lisa",
@@ -27,7 +27,7 @@
   },
   {
     "ID": "pineal",
-    "Title": "Pineal Gland",
+    "Title": "pineal",
     "Description": "Pineal gland with corpora aranacea",
     "metadata": {
       "Owner": "Lee, Lisa",
@@ -78,7 +78,7 @@
   {
     "ID": "CU-001-512",
     "Title": "Loose CT-512",
-    "Description": "Abundantfibroblasts",
+    "Description": "Abundant fibroblasts",
     "metadata": {
       "Owner": "Lee, Lisa",
       "Month": "March",
