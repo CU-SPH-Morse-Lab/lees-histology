@@ -46,35 +46,127 @@
 
 <h1>Lee's Histo Slide Gallery Beta Test</h1>
 
+<div id="controls">
+
+  <input type="text" id="searchBox" placeholder="Search slides..." />
+
+  <div id="tissueFilters">
+    <strong>Tissue:</strong><br>
+    <label><input type="checkbox" value="Epithelium"> Epithelium</label>
+    <label><input type="checkbox" value="Connective"> Connective</label>
+    <label><input type="checkbox" value="Muscle"> Muscle</label>
+    <label><input type="checkbox" value="Nervous"> Nervous</label>
+  </div>
+
+  <div id="systemFilters">
+    <strong>System:</strong><br>
+    <!-- dynamically filled -->
+  </div>
+
+</div>
+
 <div class="grid" id="gallery"></div>
 
 <script>
 const blob = "leeshistology";
 
+let allSlides = [];
+
 fetch("slides.json")
   .then(res => res.json())
   .then(slides => {
-    const gallery = document.getElementById("gallery");
+    allSlides = slides;
 
-    slides.forEach(slide => {
-      const card = document.createElement("div");
-      card.className = "card";
+    populateSystemFilters(slides);
+    renderSlides(slides);
 
-      const link = document.createElement("a");
-      link.href = `viewer.html?slide=${slide.ID}`;
-
-      const img = document.createElement("img");
-      img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}_thumb.jpg`;
-
-      const label = document.createElement("div");
-      label.textContent = slide.Title;
-
-      link.appendChild(img);
-      link.appendChild(label);
-      card.appendChild(link);
-      gallery.appendChild(card);
-    });
+    setupFilters();
   });
+
+
+// Render gallery
+function renderSlides(slides) {
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+
+  slides.forEach(slide => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const link = document.createElement("a");
+    link.href = `viewer.html?slide=${slide.ID}`;
+
+    const img = document.createElement("img");
+    img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}_thumb.jpg`;
+
+    const label = document.createElement("div");
+    label.textContent = slide.Title;
+
+    link.appendChild(img);
+    link.appendChild(label);
+    card.appendChild(link);
+    gallery.appendChild(card);
+  });
+}
+
+
+// Create dynamic system filters
+function populateSystemFilters(slides) {
+  const container = document.getElementById("systemFilters");
+
+  const systems = [...new Set(slides.map(s => s.metadata.System))];
+
+  systems.forEach(sys => {
+    const label = document.createElement("label");
+    label.innerHTML = `<input type="checkbox" value="${sys}"> ${sys}`;
+    container.appendChild(label);
+  });
+}
+
+
+// Setup filtering logic
+function setupFilters() {
+  document.querySelectorAll("#controls input").forEach(el => {
+    el.addEventListener("input", applyFilters);
+    el.addEventListener("change", applyFilters);
+  });
+}
+
+
+// Filter engine
+function applyFilters() {
+  const search = document.getElementById("searchBox").value.toLowerCase();
+
+  const selectedTissues = [...document.querySelectorAll("#tissueFilters input:checked")]
+    .map(el => el.value);
+
+  const selectedSystems = [...document.querySelectorAll("#systemFilters input:checked")]
+    .map(el => el.value);
+
+  const filtered = allSlides.filter(slide => {
+
+    const meta = slide.metadata;
+
+    // Text search
+    const matchesSearch =
+      slide.Title.toLowerCase().includes(search) ||
+      (meta.tags || []).some(tag => tag.toLowerCase().includes(search));
+
+    // 🧬 Tissue match (multi-category ready)
+    const matchesTissue =
+      selectedTissues.length === 0 ||
+      selectedTissues.includes(meta.Tissue);
+
+    // System match
+    const matchesSystem =
+      selectedSystems.length === 0 ||
+      selectedSystems.includes(meta.System);
+
+    return matchesSearch && matchesTissue && matchesSystem;
+  });
+
+  renderSlides(filtered);
+}
 </script>
 
 </body>
