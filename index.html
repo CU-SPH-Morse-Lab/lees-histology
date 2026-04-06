@@ -64,7 +64,7 @@ fetch("slides.json")
       link.href = `viewer.html?slide=${slide.ID}`;
 
       const img = document.createElement("img");
-      img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.Title}_thumb.jpg`;
+      img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}_thumb.jpg`;
 
       const label = document.createElement("div");
       label.textContent = slide.Title;
