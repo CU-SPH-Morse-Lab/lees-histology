@@ -16,16 +16,15 @@
 		}
 
 		#backButton {
-			position: fixed;
-			top: 10px;
-			left: 10px;
-			background: ##CFB87C;
-			color: #CFB87C;
-			padding: 8px 12px;
+			display: block;
+			margin-top: 10px;
+			margin-bottom: 15px;
+			background: #CFB87C;
+			color: #000;
+			padding: 8px;
 			cursor: pointer;
-			z-index: 1200;
 			border-radius: 5px;
-			font-size: 14px;
+			text-align: center;
 		}
 
 		#sidebar {
@@ -75,6 +74,14 @@
 		.label {
 			font-weight: bold;
 		}
+
+		.openseadragon-container .openseadragon-controls {
+			top: auto !important;
+			bottom: 10px !important;
+			left: 50% !important;
+			transform: translateX(-50%);
+		}
+
 	</style>
 </head>
 
@@ -82,9 +89,8 @@
 
 	<div id="toggleTab">☰</div>
 
-	<div id="backButton">Gallery Home</div>
-
 	<div id="sidebar">
+		<div id="backButton">Gallery Home</div>
 		<h2 id="title">Loading...</h2>
 		<p id="description"></p>
 		
@@ -154,6 +160,11 @@
 			document.getElementById("tags").textContent = (meta.tags || []).join(", ");
 			document.getElementById("date").textContent = date;
 		}
+
+		const viewerElement = document.getElementById("viewer");
+		const viewerWidth = viewerElement.clientWidth;
+		const navWidth = Math.max(120, viewerWidth * 0.15); // min size safeguard
+		const navHeight = navWidth * 0.75;
 	
 		// Initialize OpenSeadragon
 		function loadViewer(slide) {
@@ -169,8 +180,8 @@
 				navigatorAutoFade: true,
 				minZoomImageRatio: 0.9,
 				visibilityRatio: 1.0,
-				navigatorWidth: 0.15,   // 15% of viewer width
-				navigatorHeight: 0.15,
+				navigatorWidth: navWidth,   // 15% of viewer width
+				navigatorHeight: navHeight,
 				navigatorAutoResize: true,
 				navigatorBackground: "#222",
 				navigatorBorderColor: "#999",
