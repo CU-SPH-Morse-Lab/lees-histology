@@ -133,10 +133,12 @@ function populateSystemFilters(slides) {
 
 // Setup filtering logic
 function setupFilters() {
-  document.querySelectorAll("#controls input").forEach(el => {
-    el.addEventListener("input", applyFilters);
-    el.addEventListener("change", applyFilters);
-  });
+document.querySelectorAll("#controls input").forEach(el => {
+  el.addEventListener("input", applyFilters);
+  el.addEventListener("change", applyFilters);
+});
+document.getElementById("systemDropdown")
+  .addEventListener("change", applyFilters);
 }
 
 
