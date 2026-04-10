@@ -28,6 +28,19 @@
 			text-align: center;
 		}
 
+		#linkButton {
+			display: block;
+			margin-top: 10px;
+			margin-bottom: 15px;
+			width: 40%;
+			background-color: #CFB87C;
+			color: #000;
+			padding: 8px;
+			cursor: pointer;
+			border-radius: 5px;
+			text-align: center;
+		}
+
 		#sidebar {
 			position: fixed;
 			left: -300px; /* hidden by default */
@@ -93,6 +106,7 @@
 
 	<div id="sidebar">
 		<div id="backButton">Gallery Home</div>
+		<div id="linkButton">Generate Link to Current View</div>
 		<h2 id="title">Loading...</h2>
 		<p id="description"></p>
 		
@@ -103,6 +117,7 @@
 		<div class="meta"><span class="label">Stain:</span> <span id="stain"></span></div>
 		<div class="meta"><span class="label">Magnification:</span> <span id="magnification"></span></div>
 		<div class="meta"><span class="label">Tags:</span> <span id="tags"></span></div>
+		
 	</div>
 	
 	<div id="viewer"></div>
@@ -126,6 +141,11 @@
 		// Button to return to slide gallery
 		document.getElementById("backButton").onclick = () => {
 			window.location.href = "index.html";
+		};
+
+		// Button to generate URL link
+		document.getElementById("linkButton").onclick = () => {
+			copyLink();
 		};
 
 		// Load metadata
@@ -197,6 +217,41 @@
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
 		}
+
+		function getParams() {
+			const params = new URLSearchParams(window.location.search);
+			return {
+				zoom: parseFloat(params.get("zoom")),
+				x: parseFloat(params.get("x")),
+				y: parseFloat(params.get("y")),
+			};
+		}
+		
+		viewer.addHandler('open', function () {
+			const { zoom, x, y } = getParams();
+			if (!isNaN(zoom) && !isNaN(x) && !isNaN(y)) {
+				const point = new OpenSeadragon.Point(x, y);
+				viewer.viewport.zoomTo(zoom);
+				viewer.viewport.panTo(point);
+			}
+		});
+
+		function generateLink() {
+			const center = viewer.viewport.getCenter();
+			const zoom = viewer.viewport.getZoom();
+			const params = new URLSearchParams(window.location.search);
+			params.set("zoom", center ? zoom.toFixed(4) : "");
+			params.set("x", center.x.toFixed(4));
+			params.set("y", center.y.toFixed(4));
+			return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+		}
+
+		function copyLink() {
+			const link = generateLink();
+			navigator.clipboard.writeText(link);
+			alert("Link copied!");
+		}
+		
 	</script>
 
 </body>
