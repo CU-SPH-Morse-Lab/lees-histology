@@ -4,40 +4,39 @@
   <title>Lee's Histology</title>
 
   <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: white;
-      margin: 20px;
+    #layout {
+      display: flex;
     }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, 220px);
-      gap: 20px;
+    
+    #sidebar {
+      width: 25%;
+      max-width: 300px;
+      background: #f4f4f4;
+      padding: 15px;
+      height: 100vh;
+      overflow-y: auto;
+      position: sticky;
+      top: 0;
     }
-
-    .card {
-      text-align: center;
+    
+    #mainGallery {
+      flex-grow: 1;
+      padding: 20px;
     }
-
-    img {
-      width: 200px;
-      height: 200px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 2px solid #333;
-      transition: 0.2s;
+    
+    .section {
+      margin-bottom: 40px;
     }
-
-    img:hover {
-      transform: scale(1.05);
-      border-color: #4da6ff;
+    
+    .section h2 {
+      border-bottom: 2px solid #ccc;
+      padding-bottom: 5px;
     }
-
-    a {
-      text-decoration: none;
-      color: white;
+    
+    .galleryRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
   </style>
 </head>
@@ -46,28 +45,25 @@
 
 <h1>Lee's Histo Slide Gallery Beta Test</h1>
 
-<div id="controls">
+<div id="layout">
 
-  <input type="text" id="searchBox" placeholder="Search slides..." />
+  <div id="sidebar">
+    <h3>Search</h3>
+    <input type="text" id="searchBox" placeholder="Search...">
 
-  <div id="tissueFilters">
-    <strong>Tissue:</strong><br>
-    <label><input type="checkbox" value="Epithelium"> Epithelium</label>
-    <label><input type="checkbox" value="Connective"> Connective</label>
-    <label><input type="checkbox" value="Muscle"> Muscle</label>
-    <label><input type="checkbox" value="Nervous"> Nervous</label>
+    <h3>Tags</h3>
+    <div id="tagFilters"></div>
+
+    <h3>View Tissue Type:</h3>
+    <div id="tissueLinks"></div>
+
+    <h3>View Organ System:</h3>
+    <div id="systemLinks"></div>
   </div>
 
-  <div id="systemFilters">
-    <strong>System:</strong><br>
-    <select id="systemDropdown">
-      <option value="">All</option>
-    </select>
-  </div>
+  <div id="mainGallery"></div>
 
 </div>
-
-<div class="grid" id="gallery"></div>
 
 <script>
 const blob = "leeshistology";
@@ -78,69 +74,99 @@ fetch("slides.json")
   .then(res => res.json())
   .then(slides => {
     allSlides = slides;
-
-    populateSystemFilters(slides);
-    renderSlides(slides);
+    renderGroupedSlides(slides);
+    buildJumpLinks(slides);
     setupFilters();
-    
-    document.getElementById("searchBox").value = "";
-    document.getElementById("systemDropdown").value = "";
-    document.querySelectorAll("#tissueFilters input").forEach(cb => {
-      cb.checked = false;
-    });
   });
 
+function renderGroupedSlides(slides) {
+  const container = document.getElementById("mainGallery");
+  container.innerHTML = "";
+  const tissues = ["Epithelium", "Connective", "Muscle", "Nervous"];
 
-// Render gallery
-function renderSlides(slides) {
-  const gallery = document.getElementById("gallery");
-  gallery.innerHTML = "";
+  // Group by tissue type
+  tissues.forEach(tissue => {
+    const sectionSlides = slides.filter(s => {
+      const t = s.metadata.Tissue;
+      return Array.isArray(t) ? t.includes(tissue) : t === tissue;
+    });
+    if (sectionSlides.length === 0) return;
+    const section = createSection(`Tissue: ${tissue}`, sectionSlides);
+    section.id = `tissue-${tissue}`;
+    container.appendChild(section);
+  });
 
-  slides.forEach(slide => {
-    const card = document.createElement("div");
-    card.className = "card";
-
-    const link = document.createElement("a");
-    link.href = `viewer.html?slide=${slide.ID}`;
-
-    const img = document.createElement("img");
-    img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}_thumb.jpg`;
-
-    const label = document.createElement("div");
-    label.textContent = slide.Title;
-
-    link.appendChild(img);
-    link.appendChild(label);
-    card.appendChild(link);
-    gallery.appendChild(card);
+  // Group by organ system
+  const systems = [...new Set(slides.map(s => s.metadata.System))];
+  systems.forEach(system => {
+    const sectionSlides = slides.filter(s => s.metadata.System === system);
+    if (sectionSlides.length === 0) return;
+    const section = createSection(`System: ${system}`, sectionSlides);
+    section.id = `system-${system}`;
+    container.appendChild(section);
   });
 }
 
+function createSection(title, slides) {
+  const section = document.createElement("div");
+  section.className = "section";
+  const heading = document.createElement("h2");
+  heading.textContent = title;
+  const row = document.createElement("div");
+  row.className = "galleryRow";
+  slides.forEach(slide => {
+    row.appendChild(createCard(slide));
+  });
+  section.appendChild(heading);
+  section.appendChild(row);
+  return section;
+}
 
-// Create dynamic system filters dropdown
-function populateSystemFilters(slides) {
-  const dropdown = document.getElementById("systemDropdown");
+function createCard(slide) {
+  const blob = "leeshistology";
+  const card = document.createElement("div");
+  card.className = "card";
+  const link = document.createElement("a");
+  link.href = `viewer.html?slide=${slide.ID}`;
+  const img = document.createElement("img");
+  img.src = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}_thumb.jpg`;
+  const label = document.createElement("div");
+  label.textContent = slide.Title;
+  link.appendChild(img);
+  link.appendChild(label);
+  card.appendChild(link);
+  return card;
+}
 
-  const systems = [...new Set(slides.map(s => s.metadata.System))].sort();
 
-  systems.forEach(sys => {
-    const option = document.createElement("option");
-    option.value = sys;
-    option.textContent = sys;
-    dropdown.appendChild(option);
+function buildJumpLinks(slides) {
+  const tissueLinks = document.getElementById("tissueLinks");
+  const systemLinks = document.getElementById("systemLinks");
+  
+  const tissues = ["Epithelium", "Connective", "Muscle", "Nervous"];
+  tissues.forEach(t => {
+    const link = document.createElement("div");
+    link.innerHTML = `<a href="#tissue-${t}">${t}</a>`;
+    tissueLinks.appendChild(link);
+  });
+
+  const systems = [...new Set(slides.map(s => s.metadata.System))];
+  systems.forEach(s => {
+    const link = document.createElement("div");
+    link.innerHTML = `<a href="#system-${s}">${s}</a>`;
+    systemLinks.appendChild(link);
   });
 }
 
 // Setup filtering logic
 function setupFilters() {
-document.querySelectorAll("#controls input").forEach(el => {
-  el.addEventListener("input", applyFilters);
-  el.addEventListener("change", applyFilters);
-});
-document.getElementById("systemDropdown")
-  .addEventListener("change", applyFilters);
+  document.querySelectorAll("#controls input").forEach(el => {
+    el.addEventListener("input", applyFilters);
+    el.addEventListener("change", applyFilters);
+  });
+  document.getElementById("systemDropdown")
+    .addEventListener("change", applyFilters);
 }
-
 
 // Filter engine
 function applyFilters() {
