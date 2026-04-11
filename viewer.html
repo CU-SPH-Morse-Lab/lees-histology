@@ -143,13 +143,6 @@
 			window.location.href = "index.html";
 		};
 
-		// Button to generate URL link
-		document.addEventListener("DOMContentLoaded", () => {
-			document.getElementById("linkButton").onclick = () => {
-				copyLink();
-			};
-		});
-
 		// Load metadata
 		fetch("slides.json")
 		.then(res => {
@@ -168,6 +161,13 @@
 		.catch(err => {
 			console.error(err);
 			document.body.innerHTML = "<h1 style='color:white'>Error loading slide information</h1>";
+		});
+
+		// Button to generate URL link
+		document.addEventListener("DOMContentLoaded", () => {
+			document.getElementById("linkButton").onclick = () => {
+				copyLink();
+			};
 		});
 	
 		// Populate sidebar
