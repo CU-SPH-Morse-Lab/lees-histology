@@ -89,6 +89,25 @@
 			font-weight: bold;
 		}
 
+		.annotation {
+			position: absolute;
+			background: rgba(255, 0, 0, 0.7);
+			border-radius: 50%;
+			width: 12px;
+			height: 12px;
+			cursor: pointer;
+		}
+		
+		.annotation-label {
+			position: absolute;
+			background: rgba(0,0,0,0.8);
+			color: white;
+			padding: 4px;
+			font-size: 12px;
+			border-radius: 4px;
+			display: none;
+		}
+
 		.openseadragon-container .openseadragon-canvas + div {
 			top: auto !important;
 			bottom: 10px !important;
@@ -106,7 +125,7 @@
 
 	<div id="sidebar">
 		<div id="backButton">Gallery Home</div>
-		<div id="linkButton">Generate Link to Current View</div>
+		
 		<h2 id="title">Loading...</h2>
 		<p id="description"></p>
 		
@@ -117,6 +136,15 @@
 		<div class="meta"><span class="label">Stain:</span> <span id="stain"></span></div>
 		<div class="meta"><span class="label">Magnification:</span> <span id="magnification"></span></div>
 		<div class="meta"><span class="label">Tags:</span> <span id="tags"></span></div>
+
+		<div id="linkButton">Generate Link to Current View</div>
+
+		<div id="annotationControls">
+			<h3>Annotations</h3>
+			
+			<button id="toggleAnnotations">Hide Annotations</button>
+			<button id="addAnnotation">Add Annotation</button>
+		</div>
 		
 	</div>
 	
@@ -128,6 +156,9 @@
 		const slideID = params.get("slide");
 		const sidebar = document.getElementById("sidebar");
 		const togtab = document.getElementById("toggleTab");
+		let annotationsVisible = true;
+		let addingAnnotation = false;
+		let annotations = [];
 
 		togtab.addEventListener("click", () => {
 			sidebar.classList.toggle("open");
@@ -138,30 +169,41 @@
 			document.body.innerHTML = "<h1 style='color:white'>Error: No slide specified</h1>";
 		}
 
+		// Load metadata
+		fetch("slides.json")
+			.then(res => {
+				if (!res.ok) throw new Error("Failed to load slides.json");
+				return res.json();
+			})
+			
+			.then(slides => {
+				const slide = slides.find(s => s.ID === slideID);
+				if (!slide) {
+					throw new Error("Slide not found in JSON");
+				}
+				populateSidebar(slide);
+				loadViewer(slide);
+			})
+			.catch(err => {
+				console.error(err);
+				document.body.innerHTML = "<h1 style='color:white'>Error loading slide information</h1>";
+			});
+
+		// Load annotations
+		fetch("annotations.json")
+			.then(res => res.json())
+			.then(data => {
+				const slideAnnotations = data[slide.ID] || [];
+				slideAnnotations.forEach(a => {
+					annotations.push(a);
+					drawAnnotation(a);
+				});
+			});
+
 		// Button to return to slide gallery
 		document.getElementById("backButton").onclick = () => {
 			window.location.href = "index.html";
 		};
-
-		// Load metadata
-		fetch("slides.json")
-		.then(res => {
-			if (!res.ok) throw new Error("Failed to load slides.json");
-				return res.json();
-		})
-	  
-		.then(slides => {
-			const slide = slides.find(s => s.ID === slideID);
-			if (!slide) {
-				throw new Error("Slide not found in JSON");
-			}
-			populateSidebar(slide);
-			loadViewer(slide);
-		})
-		.catch(err => {
-			console.error(err);
-			document.body.innerHTML = "<h1 style='color:white'>Error loading slide information</h1>";
-		});
 
 		// Button to generate URL link
 		document.addEventListener("DOMContentLoaded", () => {
@@ -183,6 +225,15 @@
 			document.getElementById("magnification").textContent = meta.Magnification || "";
 			document.getElementById("tags").textContent = (meta.tags || []).join(", ");
 			document.getElementById("date").textContent = date;
+			document.getElementById("toggleAnnotations").onclick = () => {
+				annotationsVisible = !annotationsVisible;
+				document.querySelectorAll(".annotation").forEach(el => {
+					el.style.display = annotationsVisible ? "block" : "none";
+				});
+			};
+			document.getElementById("addAnnotation").onclick = () => {
+				addingAnnotation = true;
+			};
 		}
 
 		const viewerElement = document.getElementById("viewer");
@@ -227,8 +278,49 @@
 					viewer.viewport.panTo(point);
 				}
 			});
+			
+			viewer.addHandler("canvas-click", function(event) {
+				if (!addingAnnotation) return;
+				const webPoint = event.position;
+				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
+				const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
+				const text = prompt("Enter annotation text:");
+				if (!text) return;
+				
+				const annotation = {
+					x: imagePoint.x,
+					y: imagePoint.y,
+					text: text,
+					type: "temp"
+				};
+				
+				annotations.push(annotation);
+				drawAnnotation(annotation);
+				addingAnnotation = false;
+			});
 		}
-		
+
+		function drawAnnotation(annotation) {
+			const el = document.createElement("div");
+			el.className = "annotation";
+			const label = document.createElement("div");
+			label.className = "annotation-label";
+			label.textContent = annotation.text;
+			
+			el.appendChild(label);
+			el.addEventListener("mouseenter", () => {
+				label.style.display = "block";
+			});
+			el.addEventListener("mouseleave", () => {
+				label.style.display = "none";
+			});
+			viewer.addOverlay({
+				element: el,
+				location: new OpenSeadragon.Point(annotation.x, annotation.y),
+				placement: OpenSeadragon.Placement.CENTER
+			});
+		}
+
 		function getParams() {
 			const params = new URLSearchParams(window.location.search);
 			return {
