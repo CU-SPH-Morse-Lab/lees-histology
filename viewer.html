@@ -144,9 +144,11 @@
 		};
 
 		// Button to generate URL link
-		document.getElementById("linkButton").onclick = () => {
-			copyLink();
-		};
+		document.addEventListener("DOMContentLoaded", () => {
+			document.getElementById("linkButton").onclick = () => {
+				copyLink();
+			};
+		});
 
 		// Load metadata
 		fetch("slides.json")
