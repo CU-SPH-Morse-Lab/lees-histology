@@ -193,7 +193,8 @@
 		// Initialize OpenSeadragon
 		function loadViewer(slide) {
 			const dziUrl = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}.dzi`;
-			OpenSeadragon({
+			
+			window.viewer = OpenSeadragon({
 				id: "viewer",
 				prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
 				tileSources: dziUrl,
@@ -206,7 +207,6 @@
 				visibilityRatio: 1.0,
 				navigatorWidth: navWidth,   // 15% of viewer width
 				navigatorHeight: navHeight,
-				navigatorAutoResize: true,
 				navigatorBackground: "#222",
 				navigatorBorderColor: "#999",
 				navigatorDisplayRegionColor: "red",
@@ -218,8 +218,17 @@
 				showRotationControl: false,
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
+			
+			viewer.addHandler('open', function () {
+				const { zoom, x, y } = getParams();
+				if (!isNaN(zoom) && !isNaN(x) && !isNaN(y)) {
+					const point = new OpenSeadragon.Point(x, y);
+					viewer.viewport.zoomTo(zoom);
+					viewer.viewport.panTo(point);
+				}
+			});
 		}
-
+		
 		function getParams() {
 			const params = new URLSearchParams(window.location.search);
 			return {
@@ -229,15 +238,6 @@
 			};
 		}
 		
-		viewer.addHandler('open', function () {
-			const { zoom, x, y } = getParams();
-			if (!isNaN(zoom) && !isNaN(x) && !isNaN(y)) {
-				const point = new OpenSeadragon.Point(x, y);
-				viewer.viewport.zoomTo(zoom);
-				viewer.viewport.panTo(point);
-			}
-		});
-
 		function generateLink() {
 			const center = viewer.viewport.getCenter();
 			const zoom = viewer.viewport.getZoom();
