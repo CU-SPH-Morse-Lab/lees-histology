@@ -91,11 +91,12 @@
 
 		.annotation {
 			position: absolute;
-			background: rgba(255, 0, 0, 0.7);
+			width: 14px;
+			height: 14px;
+			background: red;
+			border: 2px solid white;
 			border-radius: 50%;
-			width: 12px;
-			height: 12px;
-			cursor: pointer;
+			z-index: 1000;
 		}
 		
 		.annotation-label {
@@ -159,6 +160,7 @@
 		let annotationsVisible = true;
 		let addingAnnotation = false;
 		let annotations = [];
+		let viewer;
 
 		togtab.addEventListener("click", () => {
 			sidebar.classList.toggle("open");
@@ -193,7 +195,7 @@
 		fetch("annotations.json")
 			.then(res => res.json())
 			.then(data => {
-				const slideAnnotations = data[slide.ID] || [];
+				const slideAnnotations = data[slideID] || [];
 				slideAnnotations.forEach(a => {
 					annotations.push(a);
 					drawAnnotation(a);
@@ -233,6 +235,7 @@
 			};
 			document.getElementById("addAnnotation").onclick = () => {
 				addingAnnotation = true;
+				document.getElementById("viewer").style.cursor = "crosshair";
 			};
 		}
 
@@ -245,7 +248,7 @@
 		function loadViewer(slide) {
 			const dziUrl = `https://${blob}.blob.core.windows.net/${blob}/slides/${slide.ID}/${slide.ID}.dzi`;
 			
-			window.viewer = OpenSeadragon({
+			viewer = OpenSeadragon({
 				id: "viewer",
 				prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
 				tileSources: dziUrl,
@@ -278,9 +281,10 @@
 					viewer.viewport.panTo(point);
 				}
 			});
-			
+
 			viewer.addHandler("canvas-click", function(event) {
 				if (!addingAnnotation) return;
+				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const webPoint = event.position;
 				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
 				const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
@@ -293,11 +297,12 @@
 					text: text,
 					type: "temp"
 				};
-				
 				annotations.push(annotation);
 				drawAnnotation(annotation);
 				addingAnnotation = false;
+				document.getElementById("viewer").style.cursor = "default";
 			});
+
 		}
 
 		function drawAnnotation(annotation) {
@@ -316,9 +321,10 @@
 			});
 			viewer.addOverlay({
 				element: el,
-				location: new OpenSeadragon.Point(annotation.x, annotation.y),
+				location: viewer.viewport.imageToViewportCoordinates(annotation.x, annotation.y),
 				placement: OpenSeadragon.Placement.CENTER
 			});
+			console.log("Drawing annotation at:", annotation.x, annotation.y);
 		}
 
 		function getParams() {
