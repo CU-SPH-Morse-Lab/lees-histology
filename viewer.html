@@ -191,17 +191,6 @@
 				document.body.innerHTML = "<h1 style='color:white'>Error loading slide information</h1>";
 			});
 
-		// Load annotations
-		fetch("annotations.json")
-			.then(res => res.json())
-			.then(data => {
-				const slideAnnotations = data[slideID] || [];
-				slideAnnotations.forEach(a => {
-					annotations.push(a);
-					drawAnnotation(a);
-				});
-			});
-
 		// Button to return to slide gallery
 		document.getElementById("backButton").onclick = () => {
 			window.location.href = "index.html";
@@ -271,6 +260,21 @@
 				showFullPageControl: true,
 				showRotationControl: false,
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
+			});
+
+			// Load annotations
+			viewer.addHandler("open", function () {
+				fetch("annotations.json")
+					.then(res => res.json())
+					.then(data => {
+						console.log("Annotations JSON:", data);
+						console.log("Current slide ID:", slide.ID);
+						const slideAnnotations = data[slide.ID] || [];
+						slideAnnotations.forEach(a => {
+							annotations.push(a);
+							drawAnnotation(a);
+						});
+					});
 			});
 			
 			viewer.addHandler('open', function () {
