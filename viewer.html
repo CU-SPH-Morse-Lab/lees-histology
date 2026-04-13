@@ -110,6 +110,39 @@
 			z-index: 500;
 		}
 
+		.annotation-item {
+			padding: 6px;
+			margin: 4px 0;
+			background: #eee;
+			cursor: pointer;
+			border-left: 6px solid red;
+			font-size: 13px;
+		}
+		
+		.annotation-item:hover {
+			background: #ddd;
+		}
+		
+		.annotation-toggle {
+			margin-right: 6px;
+		}
+
+		#annotationEditor {
+			position: absolute;
+			top: 80px;
+			right: 20px;
+			width: 220px;
+			background: white;
+			border: 1px solid #ccc;
+			padding: 10px;
+			z-index: 2000;
+			cursor: move;
+		}
+		
+		.hidden {
+			display: none;
+		}
+
 		.openseadragon-container .openseadragon-canvas + div {
 			top: auto !important;
 			bottom: 10px !important;
@@ -147,7 +180,30 @@
 			<button id="toggleAnnotations">Hide Annotations</button>
 			<button id="addAnnotation">Add Annotation</button>
 		</div>
+
+		<div id="annotationListContainer">
+			<h3>Annotations</h3>
+			<div id="annotationList"></div>
+		</div>
 		
+	</div>
+
+	<div id="annotationEditor" class="hidden">
+		<h3>Annotation Editor</h3>
+		<div>
+			<button data-tool="point">Point</button>
+			<button data-tool="line">Line</button>
+			<button data-tool="rect">Rectangle</button>
+			<button data-tool="ellipse">Ellipse</button>
+			<button data-tool="polygon">Polygon</button>
+		</div>
+		
+		<div>
+			<label>Color:</label>
+			<input type="color" id="colorPicker" value="#ff0000">
+		</div>
+		
+		<button id="finishEditing">Finish Editing</button>
 	</div>
 	
 	<div id="viewer"></div>
@@ -203,6 +259,29 @@
 				copyLink();
 			};
 		});
+
+		// Button to initiate annotating
+		document.getElementById("addAnnotation").onclick = () => {
+			document.getElementById("annotationEditor").classList.remove("hidden");
+			document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
+		};
+
+		// Button to complete annotating
+		document.getElementById("finishEditing").onclick = () => {
+			annotationMode = null;
+			document.getElementById("annotationEditor").classList.add("hidden");
+			document.getElementById("sidebar").style.display = "block"; // Restore sidebar
+			document.getElementById("viewer").style.cursor = "default"; // Return cursor to default
+		};
+
+		// Switching between annotation modes (i.e., point, line, shape)
+		document.querySelectorAll("#annotationEditor button[data-tool]")
+			.forEach(btn => {
+				btn.onclick = () => {
+					annotationMode = btn.dataset.tool;
+					document.getElementById("viewer").style.cursor = "crosshair";
+				};
+			});
 	
 		// Populate sidebar
 		function populateSidebar(slide) {
@@ -297,10 +376,13 @@
 				if (!text) return;
 				
 				const annotation = {
-					x: imagePoint.x,
-					y: imagePoint.y,
-					text: text,
-					type: "temp"
+					id: Date.now(),
+					x,
+					y,
+					text,
+					type: "temp",
+					visible: true,
+					element: null
 				};
 				annotations.push(annotation);
 				drawAnnotation(annotation);
@@ -309,7 +391,7 @@
 			});
 
 		}
-
+		
 		function drawAnnotation(annotation) {
 			const el = document.createElement("div");
 			el.className = "annotation";
@@ -318,18 +400,49 @@
 			label.textContent = annotation.text;
 			
 			el.appendChild(label);
-			el.addEventListener("mouseenter", () => {
-				label.style.display = "block";
-			});
-			el.addEventListener("mouseleave", () => {
-				label.style.display = "none";
-			});
+			el.addEventListener("mouseenter", () => label.style.display = "block");
+			el.addEventListener("mouseleave", () => label.style.display = "none");
+			
 			viewer.addOverlay({
 				element: el,
 				location: viewer.viewport.imageToViewportCoordinates(annotation.x, annotation.y),
 				placement: OpenSeadragon.Placement.CENTER
 			});
-			console.log("Drawing annotation at:", annotation.x, annotation.y);
+			
+			annotation.element = el;
+			addAnnotationToSidebar(annotation);
+		}
+
+		function addAnnotationToSidebar(annotation) {
+			const container = document.getElementById("annotationList");
+			const item = document.createElement("div");
+			item.className = "annotation-item";
+
+			// Visibility toggle
+			const toggle = document.createElement("input");
+			toggle.type = "checkbox";
+			toggle.checked = true;
+			toggle.className = "annotation-toggle";
+			toggle.onchange = () => {
+				annotation.visible = toggle.checked;
+				annotation.element.style.display = toggle.checked ? "block" : "none";
+			};
+			
+			// Label text
+			const label = document.createElement("span");
+			label.textContent = annotation.text;
+			
+			// Click to focus
+			item.onclick = (e) => {
+				if (e.target === toggle) return;
+				const vp = viewer.viewport.imageToViewportCoordinates(annotation.x, annotation.y);
+				viewer.viewport.panTo(vp);
+				viewer.viewport.zoomTo(2); // What is correct level of zoom?
+			};
+			
+			item.appendChild(toggle);
+			item.appendChild(label);
+			container.appendChild(item);
 		}
 
 		function getParams() {
