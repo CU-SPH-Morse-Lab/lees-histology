@@ -217,6 +217,7 @@
 		const toggleBtn = document.getElementById("toggleAnnotations");
 		let globalAnnotationsVisible = true;
 		let annotationsVisible = true;
+		let annotationMode = null;
 		let annotations = [];
 		let viewer;
 
@@ -268,10 +269,6 @@
 					el.style.display = annotationsVisible ? "block" : "none";
 				});
 			};
-			document.getElementById("addAnnotation").onclick = () => {
-				addingAnnotation = true;
-				document.getElementById("viewer").style.cursor = "crosshair";
-			};
 		}
 
 		// Button to return to slide gallery
@@ -288,16 +285,22 @@
 
 		// Button to initiate annotating
 		document.getElementById("addAnnotation").onclick = () => {
-			console.log("Opening annotation editor"); // debug
-			const editor = document.getElementById("annotationEditor");
-			if (!editor) {
-				console.error("Annotation editor not found!");
-				return;
+			try{
+				console.log("Opening annotation editor"); // debug
+				const editor = document.getElementById("annotationEditor");
+				if (!editor) {
+					console.error("Annotation editor not found!");
+					return;
+				}
+				editor.classList.remove("hidden");
+				document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
+				annotationMode = null; // wait for tool selection
+				document.getElementById("viewer").style.cursor = "default";
+			} catch (err) {
+				console.error("Annotation error:", err);
+				annotationMode = null;
+				document.getElementById("viewer").style.cursor = "default";
 			}
-			editor.classList.remove("hidden");
-			document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
-			annotationMode = null; // wait for tool selection
-			document.getElementById("viewer").style.cursor = "default";
 		};
 		
 		// Button to complete annotating
@@ -415,7 +418,6 @@
 				};
 				annotations.push(annotation);
 				drawAnnotation(annotation);
-				addingAnnotation = false;
 				document.getElementById("viewer").style.cursor = "default";
 			});
 
