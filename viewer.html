@@ -217,7 +217,6 @@
 		const toggleBtn = document.getElementById("toggleAnnotations");
 		let globalAnnotationsVisible = true;
 		let annotationsVisible = true;
-		let addingAnnotation = false;
 		let annotations = [];
 		let viewer;
 
@@ -289,10 +288,18 @@
 
 		// Button to initiate annotating
 		document.getElementById("addAnnotation").onclick = () => {
-			document.getElementById("annotationEditor").classList.remove("hidden");
+			console.log("Opening annotation editor"); // debug
+			const editor = document.getElementById("annotationEditor");
+			if (!editor) {
+				console.error("Annotation editor not found!");
+				return;
+			}
+			editor.classList.remove("hidden");
 			document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
+			annotationMode = null; // wait for tool selection
+			document.getElementById("viewer").style.cursor = "default";
 		};
-
+		
 		// Button to complete annotating
 		document.getElementById("finishEditing").onclick = () => {
 			annotationMode = null;
@@ -389,7 +396,7 @@
 			});
 
 			viewer.addHandler("canvas-click", function(event) {
-				if (!addingAnnotation) return;
+				if (!annotationMode) return;;
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const webPoint = event.position;
 				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
