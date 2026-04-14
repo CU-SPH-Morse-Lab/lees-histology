@@ -250,61 +250,6 @@
 				document.body.innerHTML = "<h1 style='color:white'>Error loading slide information</h1>";
 			});
 
-		// Button to return to slide gallery
-		document.getElementById("backButton").onclick = () => {
-			window.location.href = "index.html";
-		};
-
-		// Button to generate URL link
-		document.addEventListener("DOMContentLoaded", () => {
-			document.getElementById("linkButton").onclick = () => {
-				copyLink();
-			};
-		});
-
-		// Button to hide/show annotations globally
-		toggleBtn.onclick = () => {
-			globalAnnotationsVisible = !globalAnnotationsVisible;
-			if (globalAnnotationsVisible) {
-				toggleBtn.textContent = "Hide Annotations";
-				annotations.forEach(a => {
-					a.visible = true;
-					if (a.element) a.element.style.display = "block";
-				});
-				document.querySelectorAll(".annotation-toggle").forEach(cb => {
-					cb.checked = true;
-				});
-			} else {
-				toggleBtn.textContent = "Show All Annotations";
-				annotations.forEach(a => {
-					if (a.element) a.element.style.display = "none";
-				});
-			}
-		};
-
-		// Button to initiate annotating
-		document.getElementById("addAnnotation").onclick = () => {
-			document.getElementById("annotationEditor").classList.remove("hidden");
-			document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
-		};
-
-		// Button to complete annotating
-		document.getElementById("finishEditing").onclick = () => {
-			annotationMode = null;
-			document.getElementById("annotationEditor").classList.add("hidden");
-			document.getElementById("sidebar").style.display = "block"; // Restore sidebar
-			document.getElementById("viewer").style.cursor = "default"; // Return cursor to default
-		};
-
-		// Switching between annotation modes (i.e., point, line, shape)
-		document.querySelectorAll("#annotationEditor button[data-tool]")
-			.forEach(btn => {
-				btn.onclick = () => {
-					annotationMode = btn.dataset.tool;
-					document.getElementById("viewer").style.cursor = "crosshair";
-				};
-			});
-	
 		// Populate sidebar
 		function populateSidebar(slide) {
 			const meta = slide.metadata;
@@ -329,6 +274,61 @@
 				document.getElementById("viewer").style.cursor = "crosshair";
 			};
 		}
+
+		// Button to return to slide gallery
+		document.getElementById("backButton").onclick = () => {
+			window.location.href = "index.html";
+		};
+
+		// Button to generate URL link
+		document.addEventListener("DOMContentLoaded", () => {
+			document.getElementById("linkButton").onclick = () => {
+				copyLink();
+			};
+		});
+
+		// Button to initiate annotating
+		document.getElementById("addAnnotation").onclick = () => {
+			document.getElementById("annotationEditor").classList.remove("hidden");
+			document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
+		};
+
+		// Button to complete annotating
+		document.getElementById("finishEditing").onclick = () => {
+			annotationMode = null;
+			document.getElementById("annotationEditor").classList.add("hidden");
+			document.getElementById("sidebar").style.display = "block"; // Restore sidebar
+			document.getElementById("viewer").style.cursor = "default"; // Return cursor to default
+		};
+
+		// Switching between annotation modes (i.e., point, line, shape)
+		document.querySelectorAll("#annotationEditor button[data-tool]")
+			.forEach(btn => {
+				btn.onclick = () => {
+					annotationMode = btn.dataset.tool;
+					document.getElementById("viewer").style.cursor = "crosshair";
+				};
+			});
+
+		// Button to hide/show annotations globally
+		toggleBtn.onclick = () => {
+			globalAnnotationsVisible = !globalAnnotationsVisible;
+			if (globalAnnotationsVisible) {
+				toggleBtn.textContent = "Hide Annotations";
+				annotations.forEach(a => {
+					a.visible = true;
+					if (a.element) a.element.style.display = "block";
+				});
+				document.querySelectorAll(".annotation-toggle").forEach(cb => {
+					cb.checked = true;
+				});
+			} else {
+				toggleBtn.textContent = "Show All Annotations";
+				annotations.forEach(a => {
+					if (a.element) a.element.style.display = "none";
+				});
+			}
+		};
 
 		const viewerElement = document.getElementById("viewer");
 		const viewerWidth = viewerElement.clientWidth;
