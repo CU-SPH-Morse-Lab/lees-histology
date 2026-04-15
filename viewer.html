@@ -101,7 +101,7 @@
 		
 		.annotation-label {
 			position: absolute;
-			background: rgba(0,0,0,0.8);
+			background: #222;
 			color: white;
 			padding: 4px;
 			font-size: 12px;
@@ -263,12 +263,12 @@
 			document.getElementById("magnification").textContent = meta.Magnification || "";
 			document.getElementById("tags").textContent = (meta.tags || []).join(", ");
 			document.getElementById("date").textContent = date;
-			document.getElementById("toggleAnnotations").onclick = () => {
-				annotationsVisible = !annotationsVisible;
-				document.querySelectorAll(".annotation").forEach(el => {
-					el.style.display = annotationsVisible ? "block" : "none";
-				});
-			};
+			//document.getElementById("toggleAnnotations").onclick = () => {
+				//annotationsVisible = !annotationsVisible;
+				//document.querySelectorAll(".annotation").forEach(el => {
+					//el.style.display = annotationsVisible ? "block" : "none";
+				//});
+			//};
 		}
 
 		// Button to return to slide gallery
@@ -323,19 +323,20 @@
 		// Button to hide/show annotations globally
 		toggleBtn.onclick = () => {
 			globalAnnotationsVisible = !globalAnnotationsVisible;
+			console.log("Global visibility:", globalAnnotationsVisible);
 			if (globalAnnotationsVisible) {
 				toggleBtn.textContent = "Hide Annotations";
 				annotations.forEach(a => {
 					a.visible = true;
-					if (a.element) a.element.style.display = "block";
+					if (a.element) updateAnnotationVisibility(a);
 				});
 				document.querySelectorAll(".annotation-toggle").forEach(cb => {
 					cb.checked = true;
 				});
 			} else {
-				toggleBtn.textContent = "Show All Annotations";
+				toggleBtn.textContent = "Show Annotations";
 				annotations.forEach(a => {
-					if (a.element) a.element.style.display = "none";
+					if (a.element) updateAnnotationVisibility(a);
 				});
 			}
 		};
@@ -399,7 +400,7 @@
 			});
 
 			viewer.addHandler("canvas-click", function(event) {
-				if (!annotationMode) return;;
+				if (!annotationMode) return;
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const webPoint = event.position;
 				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
@@ -409,9 +410,9 @@
 				
 				const annotation = {
 					id: Date.now(),
-					x,
-					y,
-					text,
+					x: annotation.x,
+					y: annotation.y,
+					text: annotation.text,
 					type: "temp",
 					visible: true,
 					element: null
@@ -478,7 +479,9 @@
 
 		function updateAnnotationVisibility(annotation) {
 			const shouldShow = globalAnnotationsVisible && annotation.visible;
-			annotation.element.style.display = shouldShow ? "block" : "none";
+			if (annotation.element) {
+				annotation.element.style.display = shouldShow ? "block" : "none";
+			}
 		}
 
 		function getParams() {
