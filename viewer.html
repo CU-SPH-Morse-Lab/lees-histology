@@ -405,20 +405,21 @@
 				const webPoint = event.position;
 				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
 				const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
-				const text = prompt("Enter annotation text:");
-				if (!text) return;
+				const annotationLabel = prompt("Enter annotation label:");
+				if (!annotationLabel) return;
 				
 				const annotation = {
 					id: Date.now(),
-					x: annotation.x,
-					y: annotation.y,
-					text: annotation.text,
+					x: imagePoint.x,
+					y: imagePoint.y,
+					text: annotationLabel,
 					type: "temp",
 					visible: true,
 					element: null
 				};
 				annotations.push(annotation);
 				drawAnnotation(annotation);
+				annotationMode = null;
 				document.getElementById("viewer").style.cursor = "default";
 			});
 
