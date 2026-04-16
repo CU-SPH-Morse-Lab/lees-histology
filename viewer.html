@@ -424,7 +424,7 @@
 
 			// Adding point annotation
 			viewer.addHandler("canvas-click", function(event) {
-				if (!annotationMode !== "point") return;
+				if (annotationMode !== "point") return;
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const webPoint = event.position;
 				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
@@ -531,8 +531,8 @@
 			rect.setAttribute("y", y);
 			rect.setAttribute("width", w);
 			rect.setAttribute("height", h);
-			rect.setAttribute("stroke", a.color);
-			rect.setAttribute("fill", a.color);
+			rect.setAttribute("stroke", r.color);
+			rect.setAttribute("fill", r.color);
 			rect.setAttribute("fill-opacity", "0.25");
 			rect.setAttribute("stroke-width", "2");
 			
