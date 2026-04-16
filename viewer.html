@@ -93,10 +93,25 @@
 			position: absolute;
 			width: 14px;
 			height: 14px;
-			background: red;
-			border: 2px solid white;
+			border: 1px solid white;
+			background: black;
 			border-radius: 50%;
 			z-index: 500;
+		}
+
+		#overlayContainer {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			z-index: 1500;
+		}
+		
+		#annotationSVG {
+			width: 100%;
+			height: 100%;
 		}
 		
 		.annotation-label {
@@ -113,14 +128,14 @@
 		.annotation-item {
 			padding: 6px;
 			margin: 4px 0;
-			background: #eee;
+			background: #222;
 			cursor: pointer;
-			border-left: 6px solid red;
+			border-left: 6px solid black;
 			font-size: 13px;
 		}
 		
 		.annotation-item:hover {
-			background: #ddd;
+			background: #555;
 		}
 		
 		.annotation-toggle {
@@ -132,7 +147,7 @@
 			top: 80px;
 			right: 20px;
 			width: 220px;
-			background: white;
+			background: #222;
 			border: 1px solid #ccc;
 			padding: 10px;
 			z-index: 2000;
@@ -206,7 +221,11 @@
 		<button id="finishEditing">Finish Editing</button>
 	</div>
 	
-	<div id="viewer"></div>
+	<div id="viewer">
+		<div id="overlayContainer">
+			<svg id="annotationSVG"></svg>
+		</div>
+	</div>
 	
 	<script>
 		const blob = "leeshistology";
@@ -399,35 +418,89 @@
 				}
 			});
 
+			// SVG overlay for shape-based annotations
+			viewer.addHandler("open", updateSVGOverlay);
+			viewer.addHandler("update-viewport", updateSVGOverlay);
+
+			// Adding point annotation
 			viewer.addHandler("canvas-click", function(event) {
-				if (!annotationMode) return;
+				if (!annotationMode !== "point") return;
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const webPoint = event.position;
 				const viewportPoint = viewer.viewport.pointFromPixel(webPoint);
 				const imagePoint = viewer.viewport.viewportToImageCoordinates(viewportPoint);
-				const annotationLabel = prompt("Enter annotation label:");
-				if (!annotationLabel) return;
+				const color = document.getElementById("colorPicker").value;
+				const pointLabel = prompt("Enter annotation label:");
+				if (!pointLabel) return;
 				
-				const annotation = {
+				const pointAnnotation = {
 					id: Date.now(),
 					x: imagePoint.x,
 					y: imagePoint.y,
-					text: annotationLabel,
-					type: "temp",
+					text: pointLabel,
+					color: color,
+					type: "point",
 					visible: true,
 					element: null
 				};
-				annotations.push(annotation);
-				drawAnnotation(annotation);
+				annotations.push(pointAnnotation);
+				drawPoint(pointAnnotation);
 				annotationMode = null;
 				document.getElementById("viewer").style.cursor = "default";
 			});
 
+			// Adding rectangle annotation
+			let startPoint = null;
+			viewer.addHandler("canvas-press", function(event) {
+				if (annotationMode !== "rect") return;
+				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
+				const vp = viewer.viewport.pointFromPixel(event.position);
+				startPoint = viewer.viewport.viewportToImageCoordinates(vp);
+			});
+			viewer.addHandler("canvas-release", function(event) {
+				if (annotationMode !== "rect" || !startPoint) return;
+				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
+				const vp = viewer.viewport.pointFromPixel(event.position);
+				const endPoint = viewer.viewport.viewportToImageCoordinates(vp);
+				const color = document.getElementById("colorPicker").value;
+				const rectLabel = prompt("Enter annotation label:");
+				if (!rectLabel) return;
+				
+				const rectAnnotation = {
+					id: Date.now(),
+					type: "rect",
+					x1: startPoint.x,
+					y1: startPoint.y,
+					x2: endPoint.x,
+					y2: endPoint.y,
+					color: color,
+					text: rectLabel,
+					visible: true
+				};
+				
+				drawRectangle(rectAnnotation);
+				annotations.push(rectAnnotation);
+				
+				startPoint = null;
+				annotationMode = null;
+				document.getElementById("viewer").style.cursor = "default";
+			});
+		}
+
+		function updateSVGOverlay() {
+			const svg = document.getElementById("annotationSVG");
+			const bounds = viewer.viewport.getBounds(true);
+			const topLeft = viewer.viewport.viewportToViewerElementCoordinates(bounds.getTopLeft());
+			const bottomRight = viewer.viewport.viewportToViewerElementCoordinates(bounds.getBottomRight());
+			svg.setAttribute("viewBox",
+							 `${topLeft.x} ${topLeft.y} ${bottomRight.x - topLeft.x} ${bottomRight.y - topLeft.y}`
+							);
 		}
 		
-		function drawAnnotation(annotation) {
+		function drawPoint(annotation) {
 			const el = document.createElement("div");
 			el.className = "annotation";
+			el.style.background = annotation.color;
 			const label = document.createElement("div");
 			label.className = "annotation-label";
 			label.textContent = annotation.text;
@@ -443,6 +516,28 @@
 			});
 			
 			annotation.element = el;
+			addAnnotationToSidebar(annotation);
+		}
+
+		function drawRectangle(r) {
+			const svg = document.getElementById("annotationSVG");
+			const rect = document.createElementNS("https://www.w3.org/2000/svg", "rect");
+			const x = Math.min(r.x1, r.x2);
+			const y = Math.min(r.y1, r.y2);
+			const w = Math.abs(r.x2 - r.x1);
+			const h = Math.abs(r.y2 - r.y1);
+			
+			rect.setAttribute("x", x);
+			rect.setAttribute("y", y);
+			rect.setAttribute("width", w);
+			rect.setAttribute("height", h);
+			rect.setAttribute("stroke", a.color);
+			rect.setAttribute("fill", a.color);
+			rect.setAttribute("fill-opacity", "0.25");
+			rect.setAttribute("stroke-width", "2");
+			
+			svg.appendChild(rect);
+			annotation.element = rect;
 			addAnnotationToSidebar(annotation);
 		}
 
