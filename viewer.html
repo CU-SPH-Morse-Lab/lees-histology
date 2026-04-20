@@ -322,6 +322,14 @@
 				document.getElementById("viewer").style.cursor = "default";
 			}
 		};
+
+		// Switching between annotation modes (i.e., point, line, shape)
+		document.querySelectorAll("#annotationEditor button[data-tool]")
+			.forEach(btn => {
+				btn.onclick = () => {
+					setAnnotationMode(btn.dataset.tool);
+				};
+			});
 		
 		// Button to complete annotating
 		document.getElementById("finishEditing").onclick = () => {
@@ -330,15 +338,6 @@
 			document.getElementById("sidebar").style.display = "block"; // Restore sidebar
 			document.getElementById("viewer").style.cursor = "default"; // Return cursor to default
 		};
-
-		// Switching between annotation modes (i.e., point, line, shape)
-		document.querySelectorAll("#annotationEditor button[data-tool]")
-			.forEach(btn => {
-				btn.onclick = () => {
-					annotationMode = btn.dataset.tool;
-					document.getElementById("viewer").style.cursor = "crosshair";
-				};
-			});
 
 		// Button to hide/show annotations globally
 		toggleBtn.onclick = () => {
@@ -514,6 +513,21 @@
 				addAnnotationToSidebar(rectAnnotation);
 				shapeCleanup();
 			});
+		}
+
+		function setAnnotationMode(mode) {
+			annotationMode = mode;
+			const viewerEl = document.getElementById("viewer");
+			
+			if (mode) {
+				console.log("Entering annotation mode:", mode);
+				viewer.setMouseNavEnabled(false); // disable pan/zoom
+				viewerEl.style.cursor = "crosshair";
+			} else {
+				console.log("Exiting annotation mode");
+				viewer.setMouseNavEnabled(true); // restore navigation
+				viewerEl.style.cursor = "pointer";
+			}
 		}
 
 		function updateSVGOverlay() {
