@@ -61,6 +61,7 @@
 		#viewer {
 			width: 100%;
 			height: 100vh;
+			cursor: pointer;
 		}
 
 		#toggleTab {
@@ -451,20 +452,49 @@
 
 			// Adding rectangle annotation
 			let startPoint = null;
+			let currentRect = null;
 			viewer.addHandler("canvas-press", function(event) {
 				if (annotationMode !== "rect") return;
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
+				viewer.setMouseNavEnabled(false);
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				startPoint = viewer.viewport.viewportToImageCoordinates(vp);
+				// Generate live preview of rectangle drawing
+				const svg = document.getElementById("annotationSVG");
+				currentRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+				currentRect.setAttribute("stroke", document.getElementById("colorPicker").value);
+				currentRect.setAttribute("fill", document.getElementById("colorPicker").value);
+				currentRect.setAttribute("fill-opacity", "0.25");
+				currentRect.setAttribute("stroke-width", "2");
+				svg.appendChild(currentRect);
+			});
+			// Update rectangle preview while dragging
+			viewer.addHandler("canvas-drag", function(event) {
+				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
+				const vp = viewer.viewport.pointFromPixel(event.position);
+				const currentPoint = viewer.viewport.viewportToImageCoordinates(vp);
+				const x = Math.min(startPoint.x, currentPoint.x);
+				const y = Math.min(startPoint.y, currentPoint.y);
+				const width = Math.abs(currentPoint.x - startPoint.x);
+				const height = Math.abs(currentPoint.y - startPoint.y);
+				
+				currentRect.setAttribute("x", x);
+				currentRect.setAttribute("y", y);
+				currentRect.setAttribute("width", width);
+				currentRect.setAttribute("height", height);
 			});
 			viewer.addHandler("canvas-release", function(event) {
-				if (annotationMode !== "rect" || !startPoint) return;
-				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
+				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
+				event.preventDefaultAction = true;
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const endPoint = viewer.viewport.viewportToImageCoordinates(vp);
-				const color = document.getElementById("colorPicker").value;
 				const rectLabel = prompt("Enter annotation label:");
-				if (!rectLabel) return;
+				if (!rectLabel) {
+					currentRect.remove();
+					shapeCleanup();
+					return;
+				}
+				const color = document.getElementById("colorPicker").value;
 				
 				const rectAnnotation = {
 					id: Date.now(),
@@ -475,15 +505,14 @@
 					y2: endPoint.y,
 					color: color,
 					text: rectLabel,
-					visible: true
+					visible: true,
+					element: currentRect
 				};
-				
+
 				drawRectangle(rectAnnotation);
 				annotations.push(rectAnnotation);
-				
-				startPoint = null;
-				annotationMode = null;
-				document.getElementById("viewer").style.cursor = "default";
+				addAnnotationToSidebar(rectAnnotation);
+				shapeCleanup();
 			});
 		}
 
@@ -537,14 +566,15 @@
 			rect.setAttribute("stroke-width", "2");
 			
 			svg.appendChild(rect);
-			annotation.element = rect;
-			addAnnotationToSidebar(annotation);
+			r.element = rect;
+			addAnnotationToSidebar(r);
 		}
 
 		function addAnnotationToSidebar(annotation) {
 			const container = document.getElementById("annotationList");
 			const item = document.createElement("div");
 			item.className = "annotation-item";
+			item.style.borderLeft = `6px solid ${annotation.color || "black"}`;
 
 			// Visibility toggle
 			const toggle = document.createElement("input");
@@ -571,6 +601,14 @@
 			item.appendChild(toggle);
 			item.appendChild(label);
 			container.appendChild(item);
+		}
+
+		function shapeCleanup() {
+			startPoint = null;
+			currentRect = null;
+			annotationMode = null;
+			viewer.setMouseNavEnabled(true);
+			document.getElementById("viewer").style.cursor = "pointer";
 		}
 
 		function updateAnnotationVisibility(annotation) {
