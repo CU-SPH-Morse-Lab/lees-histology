@@ -111,8 +111,13 @@
 		}
 		
 		#annotationSVG {
+			position: absolute;
+			top: 0;
+			left: 0;
 			width: 100%;
 			height: 100%;
+			pointer-events: none;
+			border: 2px solid red; /* DEBUG */
 		}
 		
 		.annotation-label {
@@ -283,12 +288,6 @@
 			document.getElementById("magnification").textContent = meta.Magnification || "";
 			document.getElementById("tags").textContent = (meta.tags || []).join(", ");
 			document.getElementById("date").textContent = date;
-			//document.getElementById("toggleAnnotations").onclick = () => {
-				//annotationsVisible = !annotationsVisible;
-				//document.querySelectorAll(".annotation").forEach(el => {
-					//el.style.display = annotationsVisible ? "block" : "none";
-				//});
-			//};
 		}
 
 		// Button to return to slide gallery
@@ -455,14 +454,16 @@
 			viewer.addHandler("canvas-press", function(event) {
 				if (annotationMode !== "rect") return;
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
-				viewer.setMouseNavEnabled(false);
+				console.log("PRESS");
+				//viewer.setMouseNavEnabled(false);
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				startPoint = viewer.viewport.viewportToImageCoordinates(vp);
 				// Generate live preview of rectangle drawing
 				const svg = document.getElementById("annotationSVG");
 				currentRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-				currentRect.setAttribute("stroke", document.getElementById("colorPicker").value);
-				currentRect.setAttribute("fill", document.getElementById("colorPicker").value);
+				const color = document.getElementById("colorPicker").value;
+				currentRect.setAttribute("stroke", color);
+				currentRect.setAttribute("fill", color);
 				currentRect.setAttribute("fill-opacity", "0.25");
 				currentRect.setAttribute("stroke-width", "2");
 				svg.appendChild(currentRect);
@@ -470,6 +471,8 @@
 			// Update rectangle preview while dragging
 			viewer.addHandler("canvas-drag", function(event) {
 				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
+				event.preventDefaultAction = true;  // Stop OpenSeadragon from panning
+				console.log("DRAG");
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const currentPoint = viewer.viewport.viewportToImageCoordinates(vp);
 				const x = Math.min(startPoint.x, currentPoint.x);
@@ -485,6 +488,7 @@
 			viewer.addHandler("canvas-release", function(event) {
 				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
 				event.preventDefaultAction = true;
+				console.log("RELEASE");
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const endPoint = viewer.viewport.viewportToImageCoordinates(vp);
 				const rectLabel = prompt("Enter annotation label:");
@@ -521,11 +525,11 @@
 			
 			if (mode) {
 				console.log("Entering annotation mode:", mode);
-				viewer.setMouseNavEnabled(false); // disable pan/zoom
+				//viewer.setMouseNavEnabled(false); // disable pan/zoom
 				viewerEl.style.cursor = "crosshair";
 			} else {
 				console.log("Exiting annotation mode");
-				viewer.setMouseNavEnabled(true); // restore navigation
+				//viewer.setMouseNavEnabled(true); // restore navigation
 				viewerEl.style.cursor = "pointer";
 			}
 		}
@@ -564,7 +568,7 @@
 
 		function drawRectangle(r) {
 			const svg = document.getElementById("annotationSVG");
-			const rect = document.createElementNS("https://www.w3.org/2000/svg", "rect");
+			const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 			const x = Math.min(r.x1, r.x2);
 			const y = Math.min(r.y1, r.y2);
 			const w = Math.abs(r.x2 - r.x1);
