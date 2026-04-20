@@ -620,8 +620,7 @@
 		function shapeCleanup() {
 			startPoint = null;
 			currentRect = null;
-			annotationMode = null;
-			viewer.setMouseNavEnabled(true);
+			setAnnotationMode(null);
 			document.getElementById("viewer").style.cursor = "pointer";
 		}
 
