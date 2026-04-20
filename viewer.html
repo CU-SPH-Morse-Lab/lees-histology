@@ -450,6 +450,7 @@
 
 			// Adding rectangle annotation
 			let startPoint = null;
+			let currentPoint = null;
 			let currentRect = null;
 			viewer.addHandler("canvas-press", function(event) {
 				if (annotationMode !== "rect") return;
@@ -473,13 +474,12 @@
 				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
 				event.preventDefaultAction = true;  // Stop OpenSeadragon from panning
 				console.log("DRAG");
-				const vp = viewer.viewport.pointFromPixel(event.position);
-				const currentPoint = viewer.viewport.viewportToImageCoordinates(vp);
-				const x = Math.min(startPoint.x, currentPoint.x);
-				const y = Math.min(startPoint.y, currentPoint.y);
-				const width = Math.abs(currentPoint.x - startPoint.x);
-				const height = Math.abs(currentPoint.y - startPoint.y);
-				
+				const vpStart = viewer.viewport.imageToViewportCoordinates(startPoint);
+				const vpCurrent = viewer.viewport.imageToViewportCoordinates(currentPoint);
+				const x = Math.min(vpStart.x, vpCurrent.x);
+				const y = Math.min(vpStart.y, vpCurrent.y);
+				const width = Math.abs(vpCurrent.x - vpStart.x);
+				const height = Math.abs(vpCurrent.y - vpStart.y);
 				currentRect.setAttribute("x", x);
 				currentRect.setAttribute("y", y);
 				currentRect.setAttribute("width", width);
@@ -512,7 +512,7 @@
 					element: currentRect
 				};
 
-				drawRectangle(rectAnnotation);
+				rectAnnotation.element = currentRect;
 				annotations.push(rectAnnotation);
 				addAnnotationToSidebar(rectAnnotation);
 				shapeCleanup();
@@ -536,14 +536,19 @@
 
 		function updateSVGOverlay() {
 			const svg = document.getElementById("annotationSVG");
+			if (!viewer || !viewer.viewport) return;
 			const bounds = viewer.viewport.getBounds(true);
-			const topLeft = viewer.viewport.viewportToViewerElementCoordinates(bounds.getTopLeft());
-			const bottomRight = viewer.viewport.viewportToViewerElementCoordinates(bounds.getBottomRight());
-			svg.setAttribute("viewBox",
-							 `${topLeft.x} ${topLeft.y} ${bottomRight.x - topLeft.x} ${bottomRight.y - topLeft.y}`
-							);
+			if (!bounds || !isFinite(bounds.x) || !isFinite(bounds.y) ||
+				!isFinite(bounds.width) || !isFinite(bounds.height)) {
+				console.warn("Skipping invalid SVG update");
+				return;
+			}
+			svg.setAttribute(
+				"viewBox",
+				`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`
+			);
 		}
-		
+
 		function drawPoint(annotation) {
 			const el = document.createElement("div");
 			el.className = "annotation";
@@ -565,14 +570,16 @@
 			annotation.element = el;
 			addAnnotationToSidebar(annotation);
 		}
-
+		
 		function drawRectangle(r) {
 			const svg = document.getElementById("annotationSVG");
 			const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-			const x = Math.min(r.x1, r.x2);
-			const y = Math.min(r.y1, r.y2);
-			const w = Math.abs(r.x2 - r.x1);
-			const h = Math.abs(r.y2 - r.y1);
+			const vp1 = viewer.viewport.imageToViewportCoordinates({ x: r.x1, y: r.y1 });
+			const vp2 = viewer.viewport.imageToViewportCoordinates({ x: r.x2, y: r.y2 });
+			const x = Math.min(vp1.x, vp2.x);
+			const y = Math.min(vp1.y, vp2.y);
+			const w = Math.abs(vp2.x - vp1.x);
+			const h = Math.abs(vp2.y - vp1.y);
 			
 			rect.setAttribute("x", x);
 			rect.setAttribute("y", y);
@@ -582,10 +589,8 @@
 			rect.setAttribute("fill", r.color);
 			rect.setAttribute("fill-opacity", "0.25");
 			rect.setAttribute("stroke-width", "2");
-			
 			svg.appendChild(rect);
 			r.element = rect;
-			addAnnotationToSidebar(r);
 		}
 
 		function addAnnotationToSidebar(annotation) {
@@ -603,19 +608,25 @@
 				annotation.visible = toggle.checked;
 				updateAnnotationVisibility(annotation);
 			};
-			
 			// Label text
 			const label = document.createElement("span");
 			label.textContent = annotation.text;
-			
 			// Click to focus
 			item.onclick = (e) => {
 				if (e.target === toggle) return;
-				const vp = viewer.viewport.imageToViewportCoordinates(annotation.x, annotation.y);
+				let center;
+				if (annotation.type === "point") {
+					center = { x: annotation.x, y: annotation.y };
+				} else if (annotation.type === "rect") {
+					center = {
+						x: (annotation.x1 + annotation.x2) / 2,
+						y: (annotation.y1 + annotation.y2) / 2
+					};
+				}
+				const vp = viewer.viewport.imageToViewportCoordinates(center);
 				viewer.viewport.panTo(vp);
 				viewer.viewport.zoomTo(2); // What is correct level of zoom?
-			};
-			
+			};			
 			item.appendChild(toggle);
 			item.appendChild(label);
 			container.appendChild(item);
