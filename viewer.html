@@ -472,14 +472,29 @@
 			// Update rectangle preview while dragging
 			viewer.addHandler("canvas-drag", function(event) {
 				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
-				event.preventDefaultAction = true;  // Stop OpenSeadragon from panning
-				console.log("DRAG");
+				event.preventDefaultAction = true;   // Stop OpenSeadragon from panning
+				const vp = viewer.viewport.pointFromPixel(event.position);
+				if (!vp){
+					console.warn("Not able to establish viewport coordinate");
+					return;
+				}
+				const currentPoint = viewer.viewport.viewportToImageCoordinates(vp);
+				if (!currentPoint || !isFinite(currentPoint.x) || !isFinite(currentPoint.y)) {
+					console.warn("Invalid currentPoint");
+					return;
+				}
+				// Convert BOTH to viewport coords
 				const vpStart = viewer.viewport.imageToViewportCoordinates(startPoint);
 				const vpCurrent = viewer.viewport.imageToViewportCoordinates(currentPoint);
+				if (!isFinite(vpStart.x) || !isFinite(vpCurrent.x)) {
+					console.warn("Invalid viewport conversion");
+					return;
+				}
 				const x = Math.min(vpStart.x, vpCurrent.x);
 				const y = Math.min(vpStart.y, vpCurrent.y);
 				const width = Math.abs(vpCurrent.x - vpStart.x);
 				const height = Math.abs(vpCurrent.y - vpStart.y);
+				
 				currentRect.setAttribute("x", x);
 				currentRect.setAttribute("y", y);
 				currentRect.setAttribute("width", width);
