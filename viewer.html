@@ -61,6 +61,7 @@
 		#viewer {
 			width: 100%;
 			height: 100vh;
+			z-index: 100;
 			cursor: pointer;
 		}
 
@@ -107,7 +108,7 @@
 			width: 100%;
 			height: 100%;
 			pointer-events: none;
-			z-index: 1500;
+			z-index: 500;
 		}
 		
 		#annotationSVG {
@@ -452,7 +453,6 @@
 			let startPoint = null;
 			let currentPoint = null;
 			let currentRect = null;
-
 			viewer.addHandler("canvas-press", function(event) {
 				if (annotationMode !== "rect") return;
 				console.log("PRESS");
@@ -480,30 +480,16 @@
 			// Update rectangle preview while dragging
 			viewer.addHandler("canvas-drag", function(event) {
 				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
-				event.preventDefaultAction = true;   // Stop OpenSeadragon from panning
+				event.preventDefaultAction = true; // Stop OpenSeadragon from panning
 				console.log("DRAG");
 				const vp = viewer.viewport.pointFromPixel(event.position);
-				if (!vp){
-					console.warn("Not able to establish viewport coordinate - DRAG");
-					return;
-				}
+				if (!vp) return;
 				const currentPoint = viewer.viewport.viewportToImageCoordinates(vp);
-				if (!currentPoint || !isFinite(currentPoint.x) || !isFinite(currentPoint.y)) {
-					console.warn("Invalid currentPoint");
-					return;
-				}
-				// Convert BOTH to viewport coords
-				const vpStart = viewer.viewport.imageToViewportCoordinates(startPoint);
-				const vpCurrent = viewer.viewport.imageToViewportCoordinates(currentPoint);
-				if (!isFinite(vpStart.x) || !isFinite(vpCurrent.x)) {
-					console.warn("Invalid viewport conversion");
-					return;
-				}
-				const x = Math.min(vpStart.x, vpCurrent.x);
-				const y = Math.min(vpStart.y, vpCurrent.y);
-				const width = Math.abs(vpCurrent.x - vpStart.x);
-				const height = Math.abs(vpCurrent.y - vpStart.y);
-				
+				if (!currentPoint) return;
+				const x = Math.min(startPoint.x, currentPoint.x);
+				const y = Math.min(startPoint.y, currentPoint.y);
+				const width = Math.abs(currentPoint.x - startPoint.x);
+				const height = Math.abs(currentPoint.y - startPoint.y);
 				currentRect.setAttribute("x", x);
 				currentRect.setAttribute("y", y);
 				currentRect.setAttribute("width", width);
@@ -516,7 +502,7 @@
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const endPoint = viewer.viewport.viewportToImageCoordinates(vp);
 				const rectLabel = prompt("Enter annotation label:");
-				if (!rectLabel) {
+				if (!rectLabel || width < 1 || height < 1) {
 					currentRect.remove();
 					shapeCleanup();
 					return;
@@ -560,20 +546,13 @@
 
 		function updateSVGOverlay() {
 			const svg = document.getElementById("annotationSVG");
-			if (!viewer || !viewer.viewport) return;
-			const bounds = viewer.viewport.getBounds(true);
-			if (!bounds){
-				console.log("Bounds not established");
+			const tiledImage = viewer.world.getItemAt(0);
+			if (!tiledImage){
+				console.log("Failed to find tiled image")
 				return;
 			}
-			if (!isFinite(bounds.x) || !isFinite(bounds.y) ||
-				!isFinite(bounds.width) || !isFinite(bounds.height)) {
-				return;
-			}
-			svg.setAttribute(
-				"viewBox",
-				`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`
-			);
+			const contentSize = tiledImage.getContentSize();
+			svg.setAttribute("viewBox", `0 0 ${contentSize.x} ${contentSize.y}`);
 		}
 
 		function drawPoint(annotation) {
@@ -614,7 +593,7 @@
 			rect.setAttribute("height", h);
 			rect.setAttribute("stroke", r.color);
 			rect.setAttribute("fill", r.color);
-			rect.setAttribute("fill-opacity", "0.25");
+			rect.setAttribute("fill-opacity", "0.15");
 			rect.setAttribute("stroke-width", "2");
 			svg.appendChild(rect);
 			r.element = rect;
