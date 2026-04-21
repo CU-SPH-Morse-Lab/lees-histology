@@ -103,7 +103,7 @@
 		
 		#annotationSVG {
 			pointer-events: none;
-			border: 2px solid red; /* DEBUG */
+			outline: 2px solid red; /* DEBUG */
 		}
 		
 		.annotation-label {
@@ -245,7 +245,6 @@
 				if (!res.ok) throw new Error("Failed to load slides.json");
 				return res.json();
 			})
-			
 			.then(slides => {
 				const slide = slides.find(s => s.ID === slideID);
 				if (!slide) {
@@ -406,13 +405,13 @@
 			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
 			viewer.addHandler("open", function () {
-				const tiledImage = viewer.world.getItemAt(0);
-				const size = tiledImage.getContentSize();
 				viewer.addOverlay({
 					element: svg,
-					location: new OpenSeadragon.Rect(0, 0, size.x, size.y)
+					location: new OpenSeadragon.Rect(0, 0, 1, 1)
 				});
-				svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
+				const tiledImage = viewer.world.getItemAt(0);
+				const size = tiledImage.getContentSize();
+				svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`); // Keep SVG in IMAGE coordinate space
 			});
 
 			// Adding point annotation
@@ -599,7 +598,6 @@
 			const item = document.createElement("div");
 			item.className = "annotation-item";
 			item.style.borderLeft = `6px solid ${annotation.color || "black"}`;
-
 			// Visibility toggle
 			const toggle = document.createElement("input");
 			toggle.type = "checkbox";
@@ -627,6 +625,7 @@
 				} else {
 					return;
 				}
+				if (!isFinite(center.x) || !isFinite(center.y)) return;
 				const vp = viewer.viewport.imageToViewportCoordinates(center);
 				viewer.viewport.panTo(vp);
 				viewer.viewport.zoomTo(2); // What is correct level of zoom?
