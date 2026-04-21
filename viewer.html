@@ -451,7 +451,6 @@
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const tiledImage = viewer.world.getItemAt(0);
-				const vp = viewer.viewport.pointFromPixel(event.position);
 				if (!vp){
 					console.warn("Not able to establish viewport coordinate - PRESS");
 					return;
