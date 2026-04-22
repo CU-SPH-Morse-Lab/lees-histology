@@ -95,7 +95,7 @@
 			font-weight: bold;
 		}
 
-		/*.annotation {
+		.annotation {
 			position: absolute;
 			width: 14px;
 			height: 14px;
@@ -103,7 +103,7 @@
 			background: black;
 			border-radius: 50%;
 			z-index: 500;
-		}*/
+		}
 		
 		#annotationSVG {
 			pointer-events: none;
@@ -572,10 +572,10 @@
 		function drawPoint(p) {
 			const svg = document.getElementById("annotationSVG");
 			const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			point.setAttribute("cx", annotation.x);
-			point.setAttribute("cy", annotation.y);
+			point.setAttribute("cx", p.x);
+			point.setAttribute("cy", p.y);
 			point.setAttribute("r", 12); // adjust size as needed
-			point.setAttribute("fill", annotation.color);
+			point.setAttribute("fill", p.color);
 			point.setAttribute("stroke", "white");
 			point.setAttribute("stroke-width", "3");
 			svg.appendChild(point);
