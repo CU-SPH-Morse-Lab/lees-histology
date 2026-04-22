@@ -79,6 +79,10 @@
 			font-size: 14px;
 		}
 
+		#toggleTab.open {
+			left: 300px;
+		}
+
 		h2 {
 			margin-top: 0;
 		}
@@ -91,7 +95,7 @@
 			font-weight: bold;
 		}
 
-		.annotation {
+		/*.annotation {
 			position: absolute;
 			width: 14px;
 			height: 14px;
@@ -99,7 +103,7 @@
 			background: black;
 			border-radius: 50%;
 			z-index: 500;
-		}
+		}*/
 		
 		#annotationSVG {
 			pointer-events: none;
@@ -376,69 +380,57 @@
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
 
-			// Load annotations
-			viewer.addHandler("open", function () {
-				fetch("annotations.json")
-					.then(res => res.json())
-					.then(data => {
-						console.log("Annotations JSON:", data);
-						console.log("Current slide ID:", slide.ID);
-						const slideAnnotations = data[slide.ID] || [];
-						slideAnnotations.forEach(a => {
-							annotations.push(a);
-							drawPoint(a);
-						});
-					});
-			});
-			
-			viewer.addHandler('open', function () {
-				const { zoom, x, y } = getParams();
-				if (!isNaN(zoom) && !isNaN(x) && !isNaN(y)) {
-					const point = new OpenSeadragon.Point(x, y);
-					viewer.viewport.zoomTo(zoom);
-					viewer.viewport.panTo(point);
-				}
-			});
-
-			// SVG overlay for shape-based annotations
+			// SVG overlay for creating annotations
 			viewer.addHandler("open", updateSVGOverlay);
 			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
 			viewer.addHandler("open", function () {
 				const tiledImage = viewer.world.getItemAt(0);
-				viewer.addOverlay({
-					element: svg,
-					location: tiledImage.getBounds(true)
-				});
 				const size = tiledImage.getContentSize();
-				svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`); // Keep SVG in IMAGE coordinate space
+				setTimeout(() => {
+					viewer.addOverlay({
+						element: svg,
+						location: tiledImage.getBounds(true)
+					});
+					svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
+				}, 0);
 			});
 
 			// Adding point annotation
+			let imagePoint = null;
 			viewer.addHandler("canvas-click", function(event) {
 				if (annotationMode !== "point") return;
+				console.log("CLICK");
 				event.preventDefaultAction = true; // Stop OpenSeadragon from auto-zooming
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const tiledImage = viewer.world.getItemAt(0);
+				if (!vp){
+					console.warn("Not able to establish viewport coordinate - CLICK");
+					return;
+				}
 				const imagePoint = tiledImage.viewportToImageCoordinates(vp);
 				const color = document.getElementById("colorPicker").value;
 				const pointLabel = prompt("Enter annotation label:");
-				if (!pointLabel) return;
+				if (!pointLabel){
+					shapeCleanup();
+					return;
+				}
 				
 				const pointAnnotation = {
 					id: Date.now(),
+					type: "point",
 					x: imagePoint.x,
 					y: imagePoint.y,
-					text: pointLabel,
 					color: color,
-					type: "point",
+					text: pointLabel,
 					visible: true,
-					element: null
+					element: imagePoint
 				};
-				annotations.push(pointAnnotation);
+
 				drawPoint(pointAnnotation);
-				annotationMode = null;
-				document.getElementById("viewer").style.cursor = "default";
+				annotations.push(pointAnnotation);
+				addAnnotationToSidebar(pointAnnotation);
+				shapeCleanup();
 			});
 
 			// Adding rectangle annotation
@@ -524,6 +516,31 @@
 				addAnnotationToSidebar(rectAnnotation);
 				shapeCleanup();
 			});
+
+			// Load annotations
+			viewer.addHandler("open", function () {
+				fetch("annotations.json")
+					.then(res => res.json())
+					.then(data => {
+						console.log("Annotations JSON:", data);
+						console.log("Current slide ID:", slide.ID);
+						const slideAnnotations = data[slide.ID] || [];
+						slideAnnotations.forEach(a => {
+							annotations.push(a);
+							drawPoint(a);
+						});
+					});
+			});
+
+			// Obtain coordinates for deep link to OSD position
+			viewer.addHandler('open', function () {
+				const { zoom, x, y } = getParams();
+				if (!isNaN(zoom) && !isNaN(x) && !isNaN(y)) {
+					const point = new OpenSeadragon.Point(x, y);
+					viewer.viewport.zoomTo(zoom);
+					viewer.viewport.panTo(point);
+				}
+			});
 		}
 
 		function setAnnotationMode(mode) {
@@ -552,26 +569,17 @@
 			svg.setAttribute("viewBox", `0 0 ${contentSize.x} ${contentSize.y}`);
 		}
 
-		function drawPoint(annotation) {
-			const el = document.createElement("div");
-			el.className = "annotation";
-			el.style.background = annotation.color;
-			const label = document.createElement("div");
-			label.className = "annotation-label";
-			label.textContent = annotation.text;
-			
-			el.appendChild(label);
-			el.addEventListener("mouseenter", () => label.style.display = "block");
-			el.addEventListener("mouseleave", () => label.style.display = "none");
-			
-			viewer.addOverlay({
-				element: el,
-				location: viewer.viewport.imageToViewportCoordinates(annotation.x, annotation.y),
-				placement: OpenSeadragon.Placement.CENTER
-			});
-			
-			annotation.element = el;
-			addAnnotationToSidebar(annotation);
+		function drawPoint(p) {
+			const svg = document.getElementById("annotationSVG");
+			const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+			point.setAttribute("cx", annotation.x);
+			point.setAttribute("cy", annotation.y);
+			point.setAttribute("r", 12); // adjust size as needed
+			point.setAttribute("fill", annotation.color);
+			point.setAttribute("stroke", "white");
+			point.setAttribute("stroke-width", "3");
+			svg.appendChild(point);
+			p.element = point;
 		}
 		
 		function drawRectangle(r) {
@@ -592,7 +600,7 @@
 			rect.setAttribute("stroke", r.color);
 			rect.setAttribute("fill", r.color);
 			rect.setAttribute("fill-opacity", "0.15");
-			rect.setAttribute("stroke-width", "2");
+			rect.setAttribute("stroke-width", "4");
 			svg.appendChild(rect);
 			r.element = rect;
 		}
@@ -632,8 +640,8 @@
 				if (!isFinite(center.x) || !isFinite(center.y)) return;
 				const tiledImage = viewer.world.getItemAt(0);
 				const vp = tiledImage.imageToViewportCoordinates(center);
-				viewer.viewport.panTo(vp);
-				viewer.viewport.zoomTo(2); // What is correct level of zoom?
+				viewer.viewport.panTo(vp, true);
+				viewer.viewport.zoomTo(2, vp, true); // What is correct level of zoom?
 			};		
 			item.appendChild(toggle);
 			item.appendChild(label);
@@ -641,7 +649,9 @@
 		}
 
 		function shapeCleanup() {
+			imagePoint = null;
 			startPoint = null;
+			currentPoint = null;
 			currentRect = null;
 			setAnnotationMode(null);
 			document.getElementById("viewer").style.cursor = "pointer";
