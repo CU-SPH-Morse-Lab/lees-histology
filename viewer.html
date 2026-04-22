@@ -107,6 +107,7 @@
 		
 		#annotationSVG {
 			pointer-events: none;
+			z-index: 10;
 			outline: 2px solid red; /* DEBUG */
 		}
 		
@@ -384,16 +385,17 @@
 			viewer.addHandler("open", updateSVGOverlay);
 			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
+
 			viewer.addHandler("open", function () {
 				const tiledImage = viewer.world.getItemAt(0);
 				const size = tiledImage.getContentSize();
-				setTimeout(() => {
+				requestAnimationFrame(() => {
 					viewer.addOverlay({
 						element: svg,
 						location: tiledImage.getBounds(true)
 					});
 					svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
-				}, 0);
+				});
 			});
 
 			// Adding point annotation
@@ -424,7 +426,6 @@
 					color: color,
 					text: pointLabel,
 					visible: true,
-					element: imagePoint
 				};
 
 				drawPoint(pointAnnotation);
@@ -574,10 +575,11 @@
 			const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
 			point.setAttribute("cx", p.x);
 			point.setAttribute("cy", p.y);
-			point.setAttribute("r", 12); // adjust size as needed
-			point.setAttribute("fill", p.color);
-			point.setAttribute("stroke", "white");
-			point.setAttribute("stroke-width", "3");
+			point.setAttribute("vector-effect", "non-scaling-stroke");
+			point.setAttribute("r", 40); // adjust size as needed
+			point.setAttribute("fill", "none");
+			point.setAttribute("stroke", p.color);
+			point.setAttribute("stroke-width", "6");
 			svg.appendChild(point);
 			p.element = point;
 		}
@@ -642,6 +644,8 @@
 				const vp = tiledImage.imageToViewportCoordinates(center);
 				viewer.viewport.panTo(vp, true);
 				viewer.viewport.zoomTo(2, vp, true); // What is correct level of zoom?
+				console.log("CENTER: ", center);
+				console.log("VP: ", vp);
 			};		
 			item.appendChild(toggle);
 			item.appendChild(label);
