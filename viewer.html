@@ -645,6 +645,8 @@
 				if (!isFinite(center.x) || !isFinite(center.y)) return;
 				console.log("CENTER:", center); // debug
 				const tiledImage = viewer.world.getItemAt(0);
+				console.log("WORLD ITEMS:", viewer.world.getItemCount());
+				console.log("TILED IMAGE:", viewer.world.getItemAt(0));
 				const vp = tiledImage.imageToViewportCoordinates(center);
 				console.log("VIEWPORT COORD:", vp); // debug
 				viewer.viewport.panTo(vp, true);
