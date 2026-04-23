@@ -647,8 +647,9 @@
 					console.warn("No tiled image available yet");
 					return;
 				}
-				const centerPoint = new OpenSeadragon.Point(center.x, center.y);
-				const vp = tiledImage.imageToViewportCoordinates(centerPoint);
+				const vp = viewer.viewport.imageToViewportCoordinates(center);
+				//const centerPoint = new OpenSeadragon.Point(center.x, center.y);
+				//const vp = tiledImage.imageToViewportCoordinates(centerPoint);
 				console.log("VIEWPORT COORD:", vp); // debug
 				if (!isFinite(vp.x) || !isFinite(vp.y)) {
 					console.error("Invalid viewport coordinate!", vp);
