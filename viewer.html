@@ -641,22 +641,20 @@
 				}
 				console.log("CENTER:", center); // debug
 				const tiledImage = viewer.world.getItemAt(0);
-				console.log("WORLD COUNT:", viewer.world.getItemCount());
-				console.log("TILED IMAGE:", tiledImage);
-				if (!tiledImage) {
-					console.warn("No tiled image available yet");
-					return;
-				}
-				const vp = viewer.viewport.imageToViewportCoordinates(center);
-				//const centerPoint = new OpenSeadragon.Point(center.x, center.y);
-				//const vp = tiledImage.imageToViewportCoordinates(centerPoint);
-				console.log("VIEWPORT COORD:", vp); // debug
-				if (!isFinite(vp.x) || !isFinite(vp.y)) {
-					console.error("Invalid viewport coordinate!", vp);
-					return;
-				}
+				if (!tiledImage) return;
+				// Convert image coords to viewport coords using bounds
+				const bounds = tiledImage.getBounds(true); // viewport space
+				const imageSize = tiledImage.getContentSize(); // image pixels
+				const normX = center.x / imageSize.x;
+				const normY = center.y / imageSize.y;
+				const vp = new OpenSeadragon.Point(
+					bounds.x + bounds.width * normX,
+					bounds.y + bounds.height * normY
+				);
+				console.log("ROBUST VP:", vp);
 				viewer.viewport.panTo(vp, true);
-				viewer.viewport.zoomTo(2, vp, true); // What is correct level of zoom?
+				//viewer.viewport.zoomTo(2, vp, true);
+				viewer.viewport.zoomTo(viewer.viewport.getMaxZoom() * 0.5, vp, true); // 50% zoom level
 			};	
 			item.appendChild(toggle);
 			item.appendChild(label);
