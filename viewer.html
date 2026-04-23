@@ -427,6 +427,7 @@
 					text: pointLabel,
 					visible: true,
 				};
+				console.log("POINT CREATED:", pointAnnotation); // debug
 
 				drawPoint(pointAnnotation);
 				annotations.push(pointAnnotation);
@@ -511,6 +512,7 @@
 					visible: true,
 					element: currentRect
 				};
+				console.log("RECT CREATED:", rectAnnotation); // debug
 
 				rectAnnotation.element = currentRect;
 				annotations.push(rectAnnotation);
@@ -626,6 +628,7 @@
 			label.textContent = annotation.text;
 			// Click to focus
 			item.onclick = (e) => {
+				console.log("CLICKED ANNOTATION:", annotation); // debug
 				if (e.target === toggle) return;
 				let center;
 				if (annotation.type === "point") {
@@ -640,8 +643,10 @@
 					return;
 				}
 				if (!isFinite(center.x) || !isFinite(center.y)) return;
+				console.log("CENTER:", center); // debug
 				const tiledImage = viewer.world.getItemAt(0);
 				const vp = tiledImage.imageToViewportCoordinates(center);
+				console.log("VIEWPORT COORD:", vp); // debug
 				viewer.viewport.panTo(vp, true);
 				viewer.viewport.zoomTo(2, vp, true); // What is correct level of zoom?
 				console.log("CENTER: ", center);
