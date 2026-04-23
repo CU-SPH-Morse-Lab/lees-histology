@@ -628,32 +628,35 @@
 			label.textContent = annotation.text;
 			// Click to focus
 			item.onclick = (e) => {
-				console.log("CLICKED ANNOTATION:", annotation); // debug
 				if (e.target === toggle) return;
+				console.log("CLICKED ANNOTATION:", annotation); // debug
 				let center;
 				if (annotation.type === "point") {
 					center = { x: annotation.x, y: annotation.y };
 				} else if (annotation.type === "rect") {
-					if (!isFinite(annotation.x1) || !isFinite(annotation.x2)) return;
 					center = {
 						x: (annotation.x1 + annotation.x2) / 2,
 						y: (annotation.y1 + annotation.y2) / 2
 					};
-				} else {
-					return;
 				}
-				if (!isFinite(center.x) || !isFinite(center.y)) return;
 				console.log("CENTER:", center); // debug
 				const tiledImage = viewer.world.getItemAt(0);
-				console.log("WORLD ITEMS:", viewer.world.getItemCount());
-				console.log("TILED IMAGE:", viewer.world.getItemAt(0));
-				const vp = tiledImage.imageToViewportCoordinates(center);
+				console.log("WORLD COUNT:", viewer.world.getItemCount());
+				console.log("TILED IMAGE:", tiledImage);
+				if (!tiledImage) {
+					console.warn("No tiled image available yet");
+					return;
+				}
+				const centerPoint = new OpenSeadragon.Point(center.x, center.y);
+				const vp = tiledImage.imageToViewportCoordinates(centerPoint);
 				console.log("VIEWPORT COORD:", vp); // debug
+				if (!isFinite(vp.x) || !isFinite(vp.y)) {
+					console.error("Invalid viewport coordinate!", vp);
+					return;
+				}
 				viewer.viewport.panTo(vp, true);
 				viewer.viewport.zoomTo(2, vp, true); // What is correct level of zoom?
-				console.log("CENTER: ", center);
-				console.log("VP: ", vp);
-			};		
+			};	
 			item.appendChild(toggle);
 			item.appendChild(label);
 			container.appendChild(item);
