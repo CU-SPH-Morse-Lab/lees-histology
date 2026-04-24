@@ -191,6 +191,7 @@
 			
 			<button id="toggleAnnotations">Hide Annotations</button>
 			<button id="addAnnotation">Add Annotation</button>
+			<button id="exportAnnotations">Export Annotations</button>
 		</div>
 
 		<div id="annotationListContainer">
@@ -347,6 +348,34 @@
 			}
 		};
 
+		// Button to export annotations
+		document.getElementById("exportAnnotations").onclick = () => {
+			const clean = annotations.map(a => {
+				return {
+					id: a.id,
+					type: a.type,
+					text: a.text,
+					color: a.color,
+					x: a.x,
+					y: a.y,
+					x1: a.x1,
+					y1: a.y1,
+					x2: a.x2,
+					y2: a.y2,
+					points: a.points || null
+				};
+			});
+			const blob = new Blob([JSON.stringify(clean, null, 2)], {
+				type: "application/json"
+			});
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = "annotations.json";
+			a.click();
+			URL.revokeObjectURL(url);
+		};
+
 		const viewerElement = document.getElementById("viewer");
 		const viewerWidth = viewerElement.clientWidth;
 		const navWidth = Math.max(120, viewerWidth * 0.15); // min size safeguard
@@ -360,6 +389,8 @@
 				id: "viewer",
 				prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
 				tileSources: dziUrl,
+				animationTime: 1.2,   // default ~1.2, tweak 0.8–1.5
+				springStiffness: 6.5,  // lower = smoother glide
 				
 				showNavigator: true,
 				crossOriginPolicy: 'Anonymous',
@@ -578,10 +609,10 @@
 			point.setAttribute("cx", p.x);
 			point.setAttribute("cy", p.y);
 			point.setAttribute("vector-effect", "non-scaling-stroke");
-			point.setAttribute("r", 40); // adjust size as needed
+			point.setAttribute("r", 20); // adjust size as needed
 			point.setAttribute("fill", "none");
 			point.setAttribute("stroke", p.color);
-			point.setAttribute("stroke-width", "6");
+			point.setAttribute("stroke-width", "10");
 			svg.appendChild(point);
 			p.element = point;
 		}
@@ -604,7 +635,7 @@
 			rect.setAttribute("stroke", r.color);
 			rect.setAttribute("fill", r.color);
 			rect.setAttribute("fill-opacity", "0.15");
-			rect.setAttribute("stroke-width", "4");
+			rect.setAttribute("stroke-width", "6");
 			svg.appendChild(rect);
 			r.element = rect;
 		}
@@ -652,9 +683,23 @@
 					bounds.y + bounds.height * normY
 				);
 				console.log("ROBUST VP:", vp);
-				viewer.viewport.panTo(vp, true);
-				//viewer.viewport.zoomTo(2, vp, true);
-				viewer.viewport.zoomTo(viewer.viewport.getMaxZoom() * 0.5, vp, true); // 50% zoom level
+				if (annotation.type === "point") {
+					const targetZoom = viewer.viewport.getMaxZoom() * 0.5; // 50% zoom level
+					viewer.viewport.panTo(vp, false);
+					setTimeout(() => {
+						viewer.viewport.zoomTo(targetZoom, vp, false);
+					}, 150);
+				}
+				if (annotation.type === "rect") {
+					const shapeBounds = {
+						x: Math.min(annotation.x1, annotation.x2),
+						y: Math.min(annotation.y1, annotation.y2),
+						width: Math.abs(annotation.x2 - annotation.x1),
+						height: Math.abs(annotation.y2 - annotation.y1)
+					};
+					viewer.viewport.panTo(vp, false);
+					zoomToBounds(shapeBounds);
+				}
 			};	
 			item.appendChild(toggle);
 			item.appendChild(label);
@@ -675,6 +720,27 @@
 			if (annotation.element) {
 				annotation.element.style.display = shouldShow ? "block" : "none";
 			}
+		}
+
+		function zoomToBounds(bounds) {
+			const tiledImage = viewer.world.getItemAt(0);
+			const imageSize = tiledImage.getContentSize();
+			const imgBounds = tiledImage.getBounds(true);
+			const norm = {
+				x: bounds.x / imageSize.x,
+				y: bounds.y / imageSize.y,
+				w: bounds.width / imageSize.x,
+				h: bounds.height / imageSize.y
+			};
+			const vpRect = new OpenSeadragon.Rect(
+				imgBounds.x + imgBounds.width * norm.x,
+				imgBounds.y + imgBounds.height * norm.y,
+				imgBounds.width * norm.w,
+				imgBounds.height * norm.h
+			);
+			setTimeout(() => {
+						viewer.viewport.fitBounds(vpRect, false);
+					},150);
 		}
 
 		function getParams() {
