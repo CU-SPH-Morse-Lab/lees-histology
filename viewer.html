@@ -63,6 +63,7 @@
 			height: 100vh;
 			z-index: 100;
 			cursor: pointer;
+			visibility: hidden;
 		}
 
 		#toggleTab {
@@ -104,11 +105,15 @@
 			border-radius: 50%;
 			z-index: 500;
 		}
+
+		#overlayContainer {
+			opacity: 0;
+			transition: opacity 0.2s ease;
+		}
 		
 		#annotationSVG {
 			pointer-events: none;
 			z-index: 10;
-			outline: 2px solid red; /* DEBUG */
 		}
 		
 		.annotation-label {
@@ -412,22 +417,28 @@
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
 
+			viewer.addHandler("open", () => {
+				document.getElementById("viewer").style.visibility = "visible";
+			});
+			viewer.addHandler("open", () => {
+				document.getElementById("overlayContainer").style.opacity = 1;
+			});
+
 			// SVG overlay for creating annotations
 			viewer.addHandler("open", updateSVGOverlay);
 			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
-
-			viewer.addHandler("open", function () {
-				const tiledImage = viewer.world.getItemAt(0);
-				const size = tiledImage.getContentSize();
-				requestAnimationFrame(() => {
-					viewer.addOverlay({
-						element: svg,
-						location: tiledImage.getBounds(true)
-					});
-					svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
-				});
-			});
+			//viewer.addHandler("open", function () {
+			//	const tiledImage = viewer.world.getItemAt(0);
+			//	const size = tiledImage.getContentSize();
+			//	requestAnimationFrame(() => {
+			//		viewer.addOverlay({
+			//			element: svg,
+			//			location: tiledImage.getBounds(true)
+			//		});
+			//		svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
+			//	});
+			//});
 
 			// Adding point annotation
 			let imagePoint = null;
@@ -683,11 +694,15 @@
 				);
 				console.log("ROBUST VP:", vp);
 				if (annotation.type === "point") {
-					const targetZoom = viewer.viewport.getMaxZoom() * 0.5; // 50% zoom level
-					viewer.viewport.panTo(vp, false);
-					setTimeout(() => {
-						viewer.viewport.zoomTo(targetZoom, vp, false);
-					}, 150);
+					const boxSize = 500; // 500 pixel bounding box around point
+					const boxBounds = {
+						x: center.x - boxSize / 2,
+						y: center.y - boxSize / 2,
+						width: boxSize,
+						height: boxSize
+					};
+					viewer.viewport.panTo(vp, false, true); // immediate = false, constrain = true
+					zoomToBounds(boxBounds);
 				}
 				if (annotation.type === "rect") {
 					const shapeBounds = {
@@ -696,7 +711,7 @@
 						width: Math.abs(annotation.x2 - annotation.x1),
 						height: Math.abs(annotation.y2 - annotation.y1)
 					};
-					viewer.viewport.panTo(vp, false);
+					viewer.viewport.panTo(vp, false, true); // immediate = false, constrain = true
 					zoomToBounds(shapeBounds);
 				}
 			};	
