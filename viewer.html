@@ -13,6 +13,8 @@
 			background: black;
 			color: white;
 			font-family: Arial;
+			padding: 0;
+			height: 100%;
 		}
 
 		#backButton {
@@ -58,13 +60,6 @@
 			left: 0;
 		}
 
-		#viewer {
-			width: 100%;
-			height: 100vh;
-			z-index: 100;
-			cursor: pointer;
-		}
-
 		#toggleTab {
 			position: fixed;
 			left: 0;
@@ -105,8 +100,20 @@
 			border-radius: 50%;
 			z-index: 500;
 		}
+
+		#viewer {
+			width: 100%;
+			height: 100vh;
+			z-index: 0;
+			cursor: pointer;
+		}
 		
 		#annotationSVG {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
 			pointer-events: none;
 			z-index: 10;
 		}
