@@ -104,15 +104,12 @@
 			border-radius: 50%;
 			z-index: 500;
 		}
-
-		#overlayContainer {
-			opacity: 0;
-			transition: opacity 0.2s ease;
-		}
 		
 		#annotationSVG {
 			pointer-events: none;
 			z-index: 10;
+			opacity: 0;
+			transition: opacity 0.2s ease;
 		}
 		
 		.annotation-label {
@@ -242,6 +239,7 @@
 
 		togtab.addEventListener("click", () => {
 			sidebar.classList.toggle("open");
+			toggleTab.classList.toggle("open");
 		});
 	
 		// Catch if slide cannot be displayed
@@ -415,26 +413,25 @@
 				showRotationControl: false,
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
-
-			viewer.addHandler("open", () => {
-				document.getElementById("overlayContainer").style.opacity = 1;
-			});
-
+			
 			// SVG overlay for creating annotations
+			viewer.addHandler("open", () => {
+				document.getElementById("annotationSVG").style.opacity = 1;
+			});
 			viewer.addHandler("open", updateSVGOverlay);
 			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
-			viewer.addHandler("open", function () {
-				const tiledImage = viewer.world.getItemAt(0);
-				const size = tiledImage.getContentSize();
-				requestAnimationFrame(() => {
-					viewer.addOverlay({
-						element: svg,
-						location: tiledImage.getBounds(true)
-					});
-					svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
-				});
-			});
+			//viewer.addHandler("open", function () {
+			//	const tiledImage = viewer.world.getItemAt(0);
+			//	const size = tiledImage.getContentSize();
+			//	requestAnimationFrame(() => {
+			//		viewer.addOverlay({
+			//			element: svg,
+			//			location: tiledImage.getBounds(true)
+			//		});
+			//		svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
+			//	});
+			//});
 
 			// Adding point annotation
 			let imagePoint = null;
