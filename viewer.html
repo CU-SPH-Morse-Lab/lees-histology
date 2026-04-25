@@ -553,15 +553,14 @@
 
 			// Load annotations
 			viewer.addHandler("open", function () {
-				fetch("annotations.json")
+				fetch(`https://<blob>/slides/${slideId}/annotations.json`)
 					.then(res => res.json())
 					.then(data => {
-						console.log("Annotations JSON:", data);
-						console.log("Current slide ID:", slide.ID);
-						const slideAnnotations = data[slide.ID] || [];
-						slideAnnotations.forEach(a => {
+						data.forEach(a => {
 							annotations.push(a);
-							drawPoint(a);
+							if (a.type === "point") drawPoint(a);
+							if (a.type === "rect") drawRectangle(a);
+							addAnnotationToSidebar(a);
 						});
 					});
 			});
