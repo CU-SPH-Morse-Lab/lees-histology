@@ -74,13 +74,14 @@
 			color: white;
 			padding: 10px;
 			cursor: pointer;
+			transition: left 0.3s ease;
 			z-index: 1100;
 			border-radius: 0 5px 5px 0;
 			font-size: 14px;
 		}
 
 		#toggleTab.open {
-			left: 300px;
+			left: 315px;
 		}
 
 		h2 {
@@ -108,8 +109,6 @@
 		#annotationSVG {
 			pointer-events: none;
 			z-index: 10;
-			opacity: 0;
-			transition: opacity 0.2s ease;
 		}
 		
 		.annotation-label {
@@ -415,9 +414,6 @@
 			});
 			
 			// SVG overlay for creating annotations
-			viewer.addHandler("open", () => {
-				document.getElementById("annotationSVG").style.opacity = 1;
-			});
 			viewer.addHandler("open", updateSVGOverlay);
 			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
