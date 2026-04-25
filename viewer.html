@@ -63,7 +63,6 @@
 			height: 100vh;
 			z-index: 100;
 			cursor: pointer;
-			visibility: hidden;
 		}
 
 		#toggleTab {
@@ -417,9 +416,9 @@
 				navigationControlAnchor: OpenSeadragon.ControlAnchor.BOTTOM
 			});
 
-			viewer.addHandler("open", () => {
-				document.getElementById("viewer").style.visibility = "visible";
-			});
+			//viewer.addHandler("open", () => {
+			//	document.getElementById("viewer").style.visibility = "visible";
+			//});
 			viewer.addHandler("open", () => {
 				document.getElementById("overlayContainer").style.opacity = 1;
 			});
