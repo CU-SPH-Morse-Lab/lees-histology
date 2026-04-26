@@ -137,6 +137,11 @@
 			border-left: 6px solid black;
 			font-size: 13px;
 		}
+
+		.annotation-hover {
+			cursor: pointer;
+			opacity: 0.8;
+		}
 		
 		.annotation-item:hover {
 			background: #555;
@@ -511,14 +516,21 @@
 				if (!vp) return;
 				const currentPoint = tiledImage.viewportToImageCoordinates(vp);
 				if (!currentPoint) return;
-				const x = Math.min(startPoint.x, currentPoint.x);
-				const y = Math.min(startPoint.y, currentPoint.y);
-				const width = Math.abs(currentPoint.x - startPoint.x);
-				const height = Math.abs(currentPoint.y - startPoint.y);
-				currentRect.setAttribute("x", x);
-				currentRect.setAttribute("y", y);
-				currentRect.setAttribute("width", width);
-				currentRect.setAttribute("height", height);
+				// Aspect ratio constraint while shift is depressed (i.e., produce square)
+				const isShift = event.originalEvent.shiftKey;
+				let width = currentPoint.x - startPoint.x;
+				let height = currentPoint.y - startPoint.y;
+				if (isShift) {
+					const size = Math.min(Math.abs(width), Math.abs(height));
+					width = Math.sign(width) * size;
+					height = Math.sign(height) * size;
+				}
+				const x = startPoint.x;
+				const y = startPoint.y;
+				currentRect.setAttribute("x", width < 0 ? x + width : x);
+				currentRect.setAttribute("y", height < 0 ? y + height : y);
+				currentRect.setAttribute("width", Math.abs(width));
+				currentRect.setAttribute("height", Math.abs(height));
 			});
 			viewer.addHandler("canvas-release", function(event) {
 				if (annotationMode !== "rect" || !startPoint || !currentRect) return;
@@ -527,8 +539,17 @@
 				const vp = viewer.viewport.pointFromPixel(event.position);
 				const tiledImage = viewer.world.getItemAt(0);
 				const endPoint = tiledImage.viewportToImageCoordinates(vp);
-				const width = Math.abs(endPoint.x - startPoint.x);
-				const height = Math.abs(endPoint.y - startPoint.y);
+				let x2 = endPoint.x;
+				let y2 = endPoint.y;
+				if (event.originalEvent.shiftKey) {
+					const dx = x2 - startPoint.x;
+					const dy = y2 - startPoint.y;
+					const size = Math.min(Math.abs(dx), Math.abs(dy));
+					x2 = startPoint.x + Math.sign(dx) * size;
+					y2 = startPoint.y + Math.sign(dy) * size;
+				}
+				const width = Math.abs(x2 - startPoint.x);
+				const height = Math.abs(y2 - startPoint.y);
 				const rectLabel = prompt("Enter annotation label:");
 				if (!rectLabel || width < 1 || height < 1) {
 					currentRect.remove();
@@ -536,21 +557,19 @@
 					return;
 				}
 				const color = document.getElementById("colorPicker").value;
-				
 				const rectAnnotation = {
 					id: Date.now(),
 					type: "rect",
 					x1: startPoint.x,
 					y1: startPoint.y,
-					x2: endPoint.x,
-					y2: endPoint.y,
+					x2: x2,
+					y2: y2,
 					color: color,
 					text: rectLabel,
 					visible: true,
 					element: currentRect
 				};
 				console.log("RECT CREATED:", rectAnnotation); // debug
-
 				rectAnnotation.element = currentRect;
 				annotations.push(rectAnnotation);
 				addAnnotationToSidebar(rectAnnotation);
@@ -610,20 +629,33 @@
 
 		function drawPoint(p) {
 			const svg = document.getElementById("annotationSVG");
-			const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-			point.setAttribute("cx", p.x);
-			point.setAttribute("cy", p.y);
-			point.setAttribute("vector-effect", "non-scaling-stroke");
-			point.setAttribute("r", 30); // adjust size as needed
-			point.setAttribute("fill", p.color);
-			point.setAttribute("stroke", "#000000");
-			point.setAttribute("stroke-width", "6");
-			svg.appendChild(point);
-			p.element = point;
+			const shapeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+			const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+			circle.setAttribute("cx", p.x);
+			circle.setAttribute("cy", p.y);
+			circle.setAttribute("r", 35); // adjust size as needed
+			circle.setAttribute("fill", p.color);
+			circle.setAttribute("stroke", "white");
+			circle.setAttribute("stroke-width", "3");
+			const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+			label.setAttribute("x", p.x + 20);
+			label.setAttribute("y", p.y - 20);
+			label.setAttribute("fill", "white");
+			label.setAttribute("font-size", "200");
+			label.setAttribute("display", "none");
+			label.textContent = p.text;
+			// Hover behavior
+			shapeGroup.addEventListener("mouseenter", () => label.setAttribute("display", "block"));
+			shapeGroup.addEventListener("mouseleave", () => label.setAttribute("display", "none"));
+			shapeGroup.appendChild(circle);
+			shapeGroup.appendChild(label);
+			svg.appendChild(shapeGroup);
+			p.element = shapeGroup;
 		}
 		
 		function drawRectangle(r) {
 			const svg = document.getElementById("annotationSVG");
+			const shapeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
 			const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
 			const tiledImage = viewer.world.getItemAt(0)	
 			const vp1 = tiledImage.viewportToImageCoordinates({ x: r.x1, y: r.y1 });
@@ -632,7 +664,6 @@
 			const y = Math.min(vp1.y, vp2.y);
 			const w = Math.abs(vp2.x - vp1.x);
 			const h = Math.abs(vp2.y - vp1.y);
-			
 			rect.setAttribute("x", x);
 			rect.setAttribute("y", y);
 			rect.setAttribute("width", w);
@@ -641,8 +672,20 @@
 			rect.setAttribute("fill", r.color);
 			rect.setAttribute("fill-opacity", "0.15");
 			rect.setAttribute("stroke-width", "6");
-			svg.appendChild(rect);
-			r.element = rect;
+			const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+			label.setAttribute("x", x + 20);
+			label.setAttribute("y", y - 20);
+			label.setAttribute("fill", "white");
+			label.setAttribute("font-size", "200");
+			label.setAttribute("display", "none");
+			label.textContent = r.text;
+			// Hover behavior
+			shapeGroup.addEventListener("mouseenter", () => label.setAttribute("display", "block"));
+			shapeGroup.addEventListener("mouseleave", () => label.setAttribute("display", "none"));
+			shapeGroup.appendChild(rect);
+			shapeGroup.appendChild(label);
+			svg.appendChild(shapeGroup);
+			r.element = shapeGroup;
 		}
 
 		function addAnnotationToSidebar(annotation) {
