@@ -76,7 +76,7 @@
 		}
 
 		#toggleTab.open {
-			left: 330px;
+			left: 315px;
 		}
 
 		h2 {
@@ -309,8 +309,9 @@
 					return;
 				}
 				editor.classList.remove("hidden");
-				document.getElementById("sidebar").style.display = "none"; // Collapse sidebar while annotating
-				annotationMode = null; // wait for tool selection
+				document.getElementById("sidebar").style.display = "none"; // Remove sidebar while annotating
+				document.getElementById("toggleTab").style.display = "none"; // Remove sidebar tab while annotating
+				annotationMode = null; // Wait for tool selection
 				document.getElementById("viewer").style.cursor = "default";
 			} catch (err) {
 				console.error("Annotation error:", err);
@@ -332,6 +333,7 @@
 			annotationMode = null;
 			document.getElementById("annotationEditor").classList.add("hidden");
 			document.getElementById("sidebar").style.display = "block"; // Restore sidebar
+			document.getElementById("toggleTab").style.display = "block"; // Restore sidebar toggle
 			document.getElementById("viewer").style.cursor = "default"; // Return cursor to default
 		};
 
@@ -422,19 +424,18 @@
 			
 			// SVG overlay for creating annotations
 			viewer.addHandler("open", updateSVGOverlay);
-			viewer.addHandler("update-viewport", updateSVGOverlay);
 			const svg = document.getElementById("annotationSVG");
-			//viewer.addHandler("open", function () {
-			//	const tiledImage = viewer.world.getItemAt(0);
-			//	const size = tiledImage.getContentSize();
-			//	requestAnimationFrame(() => {
-			//		viewer.addOverlay({
-			//			element: svg,
-			//			location: tiledImage.getBounds(true)
-			//		});
-			//		svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
-			//	});
-			//});
+			viewer.addHandler("open", function () {
+				const tiledImage = viewer.world.getItemAt(0);
+				const size = tiledImage.getContentSize();
+				// Attach SVG to image bounds
+				viewer.addOverlay({
+					element: svg,
+					location: tiledImage.getBounds(true)
+				});
+				// Set SVG coordinate system to IMAGE pixels
+				svg.setAttribute("viewBox", `0 0 ${size.x} ${size.y}`);
+			});
 
 			// Adding point annotation
 			let imagePoint = null;
@@ -455,7 +456,6 @@
 					shapeCleanup();
 					return;
 				}
-				
 				const pointAnnotation = {
 					id: Date.now(),
 					type: "point",
@@ -466,7 +466,6 @@
 					visible: true,
 				};
 				console.log("POINT CREATED:", pointAnnotation); // debug
-
 				drawPoint(pointAnnotation);
 				annotations.push(pointAnnotation);
 				addAnnotationToSidebar(pointAnnotation);
@@ -615,10 +614,10 @@
 			point.setAttribute("cx", p.x);
 			point.setAttribute("cy", p.y);
 			point.setAttribute("vector-effect", "non-scaling-stroke");
-			point.setAttribute("r", 20); // adjust size as needed
-			point.setAttribute("fill", "none");
-			point.setAttribute("stroke", p.color);
-			point.setAttribute("stroke-width", "10");
+			point.setAttribute("r", 30); // adjust size as needed
+			point.setAttribute("fill", p.color);
+			point.setAttribute("stroke", #000);
+			point.setAttribute("stroke-width", "6");
 			svg.appendChild(point);
 			p.element = point;
 		}
